@@ -1,5 +1,6 @@
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -14,9 +15,14 @@ class UserProfile(BaseModel):
     full_name: str
     email: str
     role: UserRole
+    avatar_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 
 
 class UpdateRoleRequest(BaseModel):
     role: UserRole
+
+
+class UpdateProfileRequest(BaseModel):
+    avatar_url: Optional[str] = None

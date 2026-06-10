@@ -1,6 +1,10 @@
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import TechnicianLayout from '../components/Layout/TechnicianLayout'
 import { useAuth } from '../context/AuthContext'
+import { supabase } from '../services/supabaseClient'
+import api from '../services/api'
+import Spinner from '../components/UI/Spinner'
 
 function InfoRow({ label, value }) {
   return (
@@ -27,13 +31,80 @@ function formatDate(isoString) {
   })
 }
 
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
+const MAX_SIZE_MB   = 2
+
 export default function ProfilePage() {
-  const { profile, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { profile, session, signOut, refreshProfile } = useAuth()
+  const navigate   = useNavigate()
+  const fileRef    = useRef(null)
+
+  const [uploading, setUploading]       = useState(false)
+  const [uploadError, setUploadError]   = useState('')
+  const [uploadSuccess, setUploadSuccess] = useState(false)
+  const [imgBroken, setImgBroken]       = useState(false)
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
+  }
+
+  const handleAvatarClick = () => {
+    setUploadError('')
+    setUploadSuccess(false)
+    setImgBroken(false)
+    fileRef.current?.click()
+  }
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    // Validaciones client-side
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      setUploadError('Solo se permiten imágenes JPG, PNG o WebP.')
+      return
+    }
+    if (file.size > MAX_SIZE_MB * 1024 * 1024) {
+      setUploadError(`La imagen no debe superar ${MAX_SIZE_MB} MB.`)
+      return
+    }
+
+    setUploading(true)
+    setUploadError('')
+
+    try {
+      const ext      = file.name.split('.').pop()
+      const path     = `${session.user.id}/avatar.${ext}`
+
+      // 1. Subir a Supabase Storage (bucket "avatars")
+      const { error: storageError } = await supabase.storage
+        .from('avatars')
+        .upload(path, file, { upsert: true, contentType: file.type })
+
+      if (storageError) {
+        console.error('[Storage error]', storageError)
+        throw new Error(storageError.message)
+      }
+
+      // 2. Obtener URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(path)
+
+      // 3. Guardar la URL en el perfil vía backend
+      await api.patch('/auth/me', { avatar_url: publicUrl })
+
+      // 4. Refrescar el perfil en el contexto
+      await refreshProfile()
+      setUploadSuccess(true)
+    } catch (err) {
+      setUploadError(err.message || 'Error al subir la imagen.')
+    } finally {
+      setUploading(false)
+      // Limpia el input para permitir volver a seleccionar el mismo archivo
+      e.target.value = ''
+    }
   }
 
   if (!profile) return null
@@ -41,16 +112,79 @@ export default function ProfilePage() {
   return (
     <TechnicianLayout>
       <div className="max-w-lg mx-auto">
+
         {/* Avatar */}
         <div className="card p-8 flex flex-col items-center mb-6">
-          <div className="w-20 h-20 rounded-full bg-primary/10 border-2 border-primary/20
-                          flex items-center justify-center mb-4">
-            <svg className="w-10 h-10 text-primary" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+
+          {/* Foto clickeable */}
+          <div className="relative mb-4 group">
+            <div
+              onClick={handleAvatarClick}
+              className="w-24 h-24 rounded-full overflow-hidden cursor-pointer border-2
+                         border-border hover:border-primary transition-colors"
+            >
+              {profile.avatar_url && !imgBroken ? (
+                <img
+                  src={profile.avatar_url}
+                  alt={profile.full_name}
+                  className="w-full h-full object-cover"
+                  onError={() => setImgBroken(true)}
+                />
+              ) : (
+                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                  <svg className="w-12 h-12 text-primary" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                </div>
+              )}
+
+              {/* Overlay al hacer hover */}
+              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0
+                              group-hover:opacity-100 transition-opacity flex items-center
+                              justify-center pointer-events-none">
+                {uploading ? (
+                  <Spinner size="sm" />
+                ) : (
+                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86
+                         a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0
+                         01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                )}
+              </div>
+            </div>
+
+            {/* Input oculto */}
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleFileChange}
+            />
           </div>
+
+          {/* Feedback de carga */}
+          {uploading && (
+            <p className="text-xs text-text-muted mb-2">Subiendo imagen...</p>
+          )}
+          {uploadSuccess && !uploading && (
+            <p className="text-xs text-green-600 mb-2">Foto actualizada correctamente.</p>
+          )}
+          {uploadError && (
+            <p className="text-xs text-red-600 mb-2 text-center max-w-xs">{uploadError}</p>
+          )}
+
+          <p className="text-xs text-text-muted mb-3">
+            Haz clic en la foto para cambiarla (JPG/PNG/WebP · máx. 2 MB)
+          </p>
+
           <h1 className="text-xl font-semibold text-text-main">{profile.full_name}</h1>
           <p className="text-text-muted text-sm mt-1">{profile.email}</p>
           <div className="mt-2">
@@ -61,10 +195,11 @@ export default function ProfilePage() {
         {/* Info */}
         <div className="card p-5 mb-4">
           <h2 className="text-sm font-semibold text-text-main mb-2">Información</h2>
-          <InfoRow label="Nombre completo" value={profile.full_name} />
+          <InfoRow label="Nombre completo"    value={profile.full_name} />
           <InfoRow label="Correo electrónico" value={profile.email} />
-          <InfoRow label="Rol" value={profile.role === 'admin' ? 'Administrador' : 'Técnico'} />
-          <InfoRow label="Miembro desde" value={formatDate(profile.created_at)} />
+          <InfoRow label="Rol"
+            value={profile.role === 'admin' ? 'Administrador' : 'Técnico'} />
+          <InfoRow label="Miembro desde"      value={formatDate(profile.created_at)} />
         </div>
 
         {/* Sign out */}

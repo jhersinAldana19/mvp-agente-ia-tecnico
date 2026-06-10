@@ -43,6 +43,18 @@ class SupabaseService:
         )
         return [UserProfile(**u) for u in (result.data or [])]
 
+    def update_profile(self, user_id: str, avatar_url: Optional[str] = None) -> UserProfile:
+        updates: dict = {"updated_at": _now()}
+        if avatar_url is not None:
+            updates["avatar_url"] = avatar_url
+        result = (
+            self._db.table("profiles")
+            .update(updates)
+            .eq("id", user_id)
+            .execute()
+        )
+        return UserProfile(**result.data[0])
+
     def update_role(self, user_id: str, role: UserRole) -> UserProfile:
         result = (
             self._db.table("profiles")

@@ -45,6 +45,15 @@ export function AuthProvider({ children }) {
     }
   }
 
+  const refreshProfile = async () => {
+    try {
+      const { data } = await api.get('/auth/me')
+      setProfile(data)
+    } catch {
+      setProfile(null)
+    }
+  }
+
   const signOut = async () => {
     await supabase.auth.signOut()
     setSession(null)
@@ -52,7 +61,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ session, profile, isLoading, signOut }}>
+    <AuthContext.Provider value={{ session, profile, isLoading, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

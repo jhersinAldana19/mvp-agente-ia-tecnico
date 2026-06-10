@@ -5,12 +5,13 @@
 
 -- Tabla de perfiles de usuario
 CREATE TABLE IF NOT EXISTS public.profiles (
-    id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    full_name   TEXT NOT NULL,
-    email       TEXT NOT NULL,
-    role        TEXT NOT NULL DEFAULT 'technician' CHECK (role IN ('admin', 'technician')),
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    full_name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    role TEXT NOT NULL DEFAULT 'technician',
+    avatar_url TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Tabla de sesiones de chat

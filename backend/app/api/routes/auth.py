@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.security import get_current_user
-from app.schemas.user import UserProfile
+from app.schemas.user import UpdateProfileRequest, UserProfile
 from app.services.supabase_service import SupabaseService
 
 router = APIRouter()
@@ -17,3 +17,12 @@ async def get_me(current_user: dict = Depends(get_current_user)):
             detail="Perfil no configurado. Contacte al administrador.",
         )
     return profile
+
+
+@router.patch("/me", response_model=UserProfile)
+async def update_me(
+    body: UpdateProfileRequest,
+    current_user: dict = Depends(get_current_user),
+):
+    service = SupabaseService()
+    return service.update_profile(current_user["id"], avatar_url=body.avatar_url)
