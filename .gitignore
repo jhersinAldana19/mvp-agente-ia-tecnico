@@ -1,0 +1,38 @@
+# ── Secrets & environment ──────────────────────────────────────
+.env
+.env.local
+.env.production
+.env.*.local
+
+# ── Python ─────────────────────────────────────────────────────
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.so
+
+# ── Documents / PDFs (datos privados del cliente) ──────────────
+backend/documents/
+
+# ── Node / Frontend ────────────────────────────────────────────
+node_modules/
+frontend/dist/
+
+# ── IDE / OS ───────────────────────────────────────────────────
+.vscode/
+.idea/
+*.DS_Store
+Thumbs.db
+desktop.ini
+
+# ── Logs ───────────────────────────────────────────────────────
+*.log
+logs/
