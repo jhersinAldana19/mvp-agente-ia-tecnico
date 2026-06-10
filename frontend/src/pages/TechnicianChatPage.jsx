@@ -16,7 +16,7 @@ function SofiaCard() {
       />
       <div>
         <p className="font-semibold text-text-main text-sm">SOFIA</p>
-        <p className="text-xs text-text-muted">Asistente Técnico</p>
+        <p className="text-xs text-text-muted">Agente Técnico</p>
         <div className="flex items-center gap-1.5 mt-0.5">
           <span className="w-2 h-2 bg-green-500 rounded-full" />
           <span className="text-xs text-green-600 font-medium">En línea</span>
