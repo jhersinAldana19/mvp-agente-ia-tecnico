@@ -1,5 +1,8 @@
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import SourceList from '../Sources/SourceList'
+import { useAuth } from '../../context/AuthContext'
+import perfilAgente from '../../assets/agente/perfil-agente.webp'
 
 const MD_COMPONENTS = {
   p:      ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
@@ -18,18 +21,33 @@ const MD_COMPONENTS = {
 
 function SofiaAvatar() {
   return (
-    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-primary flex items-center
-                    justify-center text-white text-sm font-semibold">
-      SF
-    </div>
+    <img
+      src={perfilAgente}
+      alt="SOFIA"
+      className="flex-shrink-0 w-9 h-9 rounded-full object-cover border border-border"
+    />
   )
 }
 
-function UserAvatar() {
+function UserAvatar({ avatarUrl, name }) {
+  const [broken, setBroken] = useState(false)
+
+  if (avatarUrl && !broken) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        className="flex-shrink-0 w-9 h-9 rounded-full object-cover border border-border"
+        onError={() => setBroken(true)}
+      />
+    )
+  }
+
   return (
     <div className="flex-shrink-0 w-9 h-9 rounded-full bg-surface border border-border
                     flex items-center justify-center">
-      <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg className="w-5 h-5 text-text-muted" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
           d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
       </svg>
@@ -45,6 +63,7 @@ function formatTime(timestamp) {
 }
 
 export default function MessageBubble({ message, onViewSource }) {
+  const { profile } = useAuth()
   const isUser = message.role === 'user'
 
   if (isUser) {
@@ -59,7 +78,7 @@ export default function MessageBubble({ message, onViewSource }) {
             {formatTime(message.created_at)}
           </p>
         </div>
-        <UserAvatar />
+        <UserAvatar avatarUrl={profile?.avatar_url} name={profile?.full_name} />
       </div>
     )
   }

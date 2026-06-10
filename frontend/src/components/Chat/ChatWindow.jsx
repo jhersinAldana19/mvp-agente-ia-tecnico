@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import Spinner from '../UI/Spinner'
 import MessageBubble from './MessageBubble'
+import perfilAgente from '../../assets/agente/perfil-agente.webp'
 
 export default function ChatWindow({ messages, isLoading, onViewSource }) {
   const bottomRef = useRef(null)
@@ -34,10 +35,11 @@ export default function ChatWindow({ messages, isLoading, onViewSource }) {
 
       {isLoading && (
         <div className="flex gap-3 items-center">
-          <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center
-                          text-white text-sm font-semibold flex-shrink-0">
-            SF
-          </div>
+          <img
+            src={perfilAgente}
+            alt="SOFIA"
+            className="w-9 h-9 rounded-full object-cover border border-border flex-shrink-0"
+          />
           <div className="card px-4 py-3">
             <Spinner size="sm" />
           </div>

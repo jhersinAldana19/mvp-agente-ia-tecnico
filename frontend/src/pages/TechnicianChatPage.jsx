@@ -4,14 +4,16 @@ import ChatWindow from '../components/Chat/ChatWindow'
 import TechnicianLayout from '../components/Layout/TechnicianLayout'
 import PdfModal from '../components/Modal/PdfModal'
 import api from '../services/api'
+import perfilAgente from '../assets/agente/perfil-agente.webp'
 
 function SofiaCard() {
   return (
     <div className="flex items-center gap-3 p-4 card mb-4">
-      <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center
-                      text-white font-semibold text-lg flex-shrink-0">
-        SF
-      </div>
+      <img
+        src={perfilAgente}
+        alt="SOFIA"
+        className="w-12 h-12 rounded-full object-cover border border-border flex-shrink-0"
+      />
       <div>
         <p className="font-semibold text-text-main text-sm">SOFIA</p>
         <p className="text-xs text-text-muted">Asistente Técnico</p>

@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import logoTecport from '../../assets/branding/logo-tecport.png'
 
 const NAV_ITEMS = [
   { to: '/chat', label: 'Chat' },
@@ -21,16 +22,12 @@ export default function TechnicianLayout({ children }) {
       <header className="bg-white border-b border-border sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4">
           <div className="flex items-center justify-between h-14">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center">
               <img
-                src="/logo-tecport.png"
+                src={logoTecport}
                 alt="TECPORT AI"
-                className="h-7 w-auto"
-                onError={(e) => { e.currentTarget.style.display = 'none' }}
+                className="h-8 w-auto"
               />
-              <span className="font-semibold text-primary text-sm hidden sm:block">
-                TECPORT AI
-              </span>
             </div>
 
             <nav className="flex items-center" aria-label="Navegación principal">
