@@ -41,6 +41,16 @@ async def list_users(current_user: dict = Depends(_get_admin_user)):
     return db.list_profiles()
 
 
+@router.get("/sessions/{session_id}", response_model=List[dict])
+async def get_session_detail(
+    session_id: str,
+    current_user: dict = Depends(_get_admin_user),
+):
+    db = SupabaseService()
+    _assert_admin(db, current_user["id"])
+    return db.get_session_messages_admin(session_id)
+
+
 @router.patch("/users/{user_id}/role", response_model=UserProfile)
 async def update_user_role(
     user_id: str,

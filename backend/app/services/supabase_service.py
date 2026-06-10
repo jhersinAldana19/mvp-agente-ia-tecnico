@@ -43,8 +43,15 @@ class SupabaseService:
         )
         return [UserProfile(**u) for u in (result.data or [])]
 
-    def update_profile(self, user_id: str, avatar_url: Optional[str] = None) -> UserProfile:
+    def update_profile(
+        self,
+        user_id: str,
+        full_name: Optional[str] = None,
+        avatar_url: Optional[str] = None,
+    ) -> UserProfile:
         updates: dict = {"updated_at": _now()}
+        if full_name is not None:
+            updates["full_name"] = full_name.strip()
         if avatar_url is not None:
             updates["avatar_url"] = avatar_url
         result = (
@@ -136,7 +143,7 @@ class SupabaseService:
     ) -> List[dict]:
         query = (
             self._db.table("chat_messages")
-            .select("id, content, created_at, user_id")
+            .select("id, session_id, content, created_at, user_id")
             .eq("role", "user")
             .order("created_at", desc=True)
             .limit(200)
@@ -157,7 +164,7 @@ class SupabaseService:
         user_ids = list({m["user_id"] for m in messages})
         profiles_result = (
             self._db.table("profiles")
-            .select("id, full_name, email")
+            .select("id, full_name, email, avatar_url")
             .in_("id", user_ids)
             .execute()
         )
@@ -167,6 +174,18 @@ class SupabaseService:
             {**m, "profiles": profiles_by_id.get(m["user_id"])}
             for m in messages
         ]
+
+
+    def get_session_messages_admin(self, session_id: str) -> List[dict]:
+        """Admin: obtiene todos los mensajes de una sesión sin restricción de user_id."""
+        result = (
+            self._db.table("chat_messages")
+            .select("id, role, content, sources, created_at")
+            .eq("session_id", session_id)
+            .order("created_at", desc=False)
+            .execute()
+        )
+        return result.data or []
 
 
 def _now() -> str:

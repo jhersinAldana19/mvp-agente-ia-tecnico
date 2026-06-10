@@ -25,4 +25,5 @@ class UpdateRoleRequest(BaseModel):
 
 
 class UpdateProfileRequest(BaseModel):
+    full_name: Optional[str] = None
     avatar_url: Optional[str] = None

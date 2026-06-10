@@ -25,4 +25,8 @@ async def update_me(
     current_user: dict = Depends(get_current_user),
 ):
     service = SupabaseService()
-    return service.update_profile(current_user["id"], avatar_url=body.avatar_url)
+    return service.update_profile(
+        current_user["id"],
+        full_name=body.full_name,
+        avatar_url=body.avatar_url,
+    )

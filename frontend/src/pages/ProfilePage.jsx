@@ -39,14 +39,41 @@ export default function ProfilePage() {
   const navigate   = useNavigate()
   const fileRef    = useRef(null)
 
-  const [uploading, setUploading]       = useState(false)
-  const [uploadError, setUploadError]   = useState('')
+  const [uploading, setUploading]         = useState(false)
+  const [uploadError, setUploadError]     = useState('')
   const [uploadSuccess, setUploadSuccess] = useState(false)
-  const [imgBroken, setImgBroken]       = useState(false)
+  const [imgBroken, setImgBroken]         = useState(false)
+
+  const [editingName, setEditingName]   = useState(false)
+  const [nameValue, setNameValue]       = useState('')
+  const [savingName, setSavingName]     = useState(false)
+  const [nameError, setNameError]       = useState('')
 
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
+  }
+
+  const startEditName = () => {
+    setNameValue(profile.full_name === 'Sin nombre' ? '' : profile.full_name)
+    setNameError('')
+    setEditingName(true)
+  }
+
+  const saveName = async () => {
+    const trimmed = nameValue.trim()
+    if (!trimmed) { setNameError('El nombre no puede estar vacío.'); return }
+    setSavingName(true)
+    setNameError('')
+    try {
+      await api.patch('/auth/me', { full_name: trimmed })
+      await refreshProfile()
+      setEditingName(false)
+    } catch {
+      setNameError('No se pudo guardar. Intenta de nuevo.')
+    } finally {
+      setSavingName(false)
+    }
   }
 
   const handleAvatarClick = () => {
@@ -185,7 +212,45 @@ export default function ProfilePage() {
             Haz clic en la foto para cambiarla (JPG/PNG/WebP · máx. 2 MB)
           </p>
 
-          <h1 className="text-xl font-semibold text-text-main">{profile.full_name}</h1>
+          {/* Nombre editable */}
+          {editingName ? (
+            <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+              <input
+                autoFocus
+                value={nameValue}
+                onChange={(e) => setNameValue(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveName()}
+                className="input-field text-center text-sm"
+                placeholder="Tu nombre completo"
+              />
+              {nameError && <p className="text-xs text-red-600">{nameError}</p>}
+              <div className="flex gap-2">
+                <button onClick={saveName} disabled={savingName}
+                  className="btn-primary px-4 py-1.5 text-xs">
+                  {savingName ? 'Guardando…' : 'Guardar'}
+                </button>
+                <button onClick={() => setEditingName(false)}
+                  className="px-4 py-1.5 text-xs border border-border rounded-lg
+                             text-text-muted hover:bg-surface transition-colors">
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <h1 className="text-xl font-semibold text-text-main">{profile.full_name}</h1>
+              <button onClick={startEditName}
+                className="text-text-muted hover:text-primary transition-colors"
+                title="Editar nombre">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                       m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            </div>
+          )}
+
           <p className="text-text-muted text-sm mt-1">{profile.email}</p>
           <div className="mt-2">
             <RoleBadge role={profile.role} />
