@@ -11,7 +11,7 @@ from app.services.supabase_service import SupabaseService
 
 router = APIRouter()
 
-_RAG_TOP_K = 8
+_RAG_TOP_K = 12
 
 
 async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
