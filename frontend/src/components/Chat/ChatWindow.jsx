@@ -4,10 +4,22 @@ import MessageBubble from './MessageBubble'
 import perfilAgente from '../../assets/agente/perfil-agente.webp'
 
 export default function ChatWindow({ messages, isLoading, onViewSource }) {
-  const bottomRef = useRef(null)
+  const bottomRef      = useRef(null)
+  const lastMsgTopRef  = useRef(null)
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (isLoading) {
+      // Mientras espera, mostrar el spinner (fondo)
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+      return
+    }
+    const last = messages[messages.length - 1]
+    if (last?.role === 'assistant') {
+      // Scroll al inicio del bubble de SOFIA para que el usuario lea desde arriba
+      lastMsgTopRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
   }, [messages, isLoading])
 
   if (!messages.length && !isLoading) {
@@ -29,9 +41,17 @@ export default function ChatWindow({ messages, isLoading, onViewSource }) {
 
   return (
     <div className="flex-1 overflow-y-auto p-4 space-y-5">
-      {messages.map((msg) => (
-        <MessageBubble key={msg.id} message={msg} onViewSource={onViewSource} />
-      ))}
+      {messages.map((msg, idx) => {
+        const isLast = idx === messages.length - 1
+        return (
+          <div key={msg.id}>
+            {isLast && msg.role === 'assistant' && (
+              <div ref={lastMsgTopRef} />
+            )}
+            <MessageBubble message={msg} onViewSource={onViewSource} />
+          </div>
+        )
+      })}
 
       {isLoading && (
         <div className="flex gap-3 items-center">
