@@ -6,8 +6,8 @@ from typing import List, Tuple
 
 import fitz  # PyMuPDF
 
-CHUNK_SIZE    = 1200  # caracteres por chunk
-CHUNK_OVERLAP = 200   # solapamiento para preservar contexto entre chunks
+CHUNK_SIZE    = 700   # caracteres por chunk
+CHUNK_OVERLAP = 150   # solapamiento para preservar contexto entre chunks
 
 
 @dataclass

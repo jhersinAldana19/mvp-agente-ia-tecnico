@@ -31,7 +31,7 @@ from app.services.pinecone_service import PineconeService
 
 
 DEFAULT_QUERY = "¿Qué maniobras puedo hacer con el joystick del TRS4531?"
-TOP_K         = 5
+TOP_K         = 15
 SNIPPET_CHARS = 280
 
 

@@ -13,17 +13,54 @@ router = APIRouter()
 
 _RAG_TOP_K = 12
 
+# Términos coloquiales del usuario → equivalentes técnicos usados en los documentos.
+# Permite recuperar chunks que usan "fabricante" aunque el usuario escriba "marca".
+_SYNONYM_MAP = {
+    "marca":         "fabricante modelo",
+    "quién fabrica": "fabricante",
+    "quien fabrica": "fabricante",
+    "fabricado por": "fabricante",
+    "hecho por":     "fabricante",
+    "proveedor":     "fabricante proveedor",
+}
+
+
+def _alt_query(question: str) -> str | None:
+    """Devuelve una reformulación técnica de la pregunta, o None si no aplica."""
+    q = question.lower()
+    for colloquial, technical in _SYNONYM_MAP.items():
+        if colloquial in q:
+            return q.replace(colloquial, technical)
+    return None
+
 
 async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
-    """Genera embedding, busca en Pinecone y construye el contexto para el LLM."""
+    """Genera embeddings, busca en Pinecone con dual-query y devuelve top sources."""
     from app.services.embeddings.factory import get_embedding_provider
     from app.services.pinecone_service import PineconeService
 
-    embedding = await get_embedding_provider().embed(question)
-    sources   = await PineconeService().search(embedding, top_k=_RAG_TOP_K)
+    embedder = get_embedding_provider()
+    pinecone  = PineconeService()
 
-    # El contexto estructurado lo construye OpenAILLMProvider internamente.
-    # Aquí solo lo pasamos vacío; el provider usa `sources` directamente.
+    # Búsqueda primaria con la pregunta original
+    embedding = await embedder.embed(question)
+    sources   = await pinecone.search(embedding, top_k=_RAG_TOP_K)
+
+    # Búsqueda secundaria con terminología técnica del documento (si aplica)
+    alt = _alt_query(question)
+    if alt:
+        alt_embedding = await embedder.embed(alt)
+        alt_sources   = await pinecone.search(alt_embedding, top_k=_RAG_TOP_K // 2)
+        # Deduplicar por (document_name, page, chunk_index)
+        seen = {(s.document_name, s.page, s.chunk_index) for s in sources}
+        for s in alt_sources:
+            key = (s.document_name, s.page, s.chunk_index)
+            if key not in seen:
+                seen.add(key)
+                sources.append(s)
+        sources.sort(key=lambda x: x.score, reverse=True)
+        sources = sources[:_RAG_TOP_K]
+
     return sources, ""
 
 
