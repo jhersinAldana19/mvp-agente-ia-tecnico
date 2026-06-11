@@ -12,13 +12,21 @@ class PineconeService:
         from pinecone import Pinecone
         return Pinecone(api_key=settings.pinecone_api_key).Index(settings.pinecone_index_name)
 
-    async def search(self, embedding: List[float], top_k: int = _DEFAULT_TOP_K) -> List[SourceItem]:
-        results = self._index().query(
+    async def search(
+        self,
+        embedding: List[float],
+        top_k: int = _DEFAULT_TOP_K,
+        filter: dict | None = None,
+    ) -> List[SourceItem]:
+        kwargs: dict = dict(
             namespace=settings.pinecone_namespace,
             vector=embedding,
             top_k=top_k,
             include_metadata=True,
         )
+        if filter:
+            kwargs["filter"] = filter
+        results = self._index().query(**kwargs)
         return [
             SourceItem(
                 document_name=m.metadata.get("document_name", ""),

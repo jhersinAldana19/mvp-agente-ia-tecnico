@@ -23,65 +23,73 @@ _SYNONYM_MAP = {
     "proveedor":     "fabricante proveedor",
 }
 
-# Palabras que indican preguntas del tipo "¿qué X tiene/lleva la máquina?"
-# → hace falta recuperar tablas de especificaciones técnicas (cap9)
-_SPEC_TRIGGERS = frozenset({
-    "lleva", "lleva el", "lleva la",
-    "qué tipo", "que tipo", "qué modelo", "que modelo",
-    "qué transmisión", "que transmision",
-    "qué motor", "que motor",
-    "qué aceite", "que aceite",
-    "qué presión", "que presion",
-    "qué capacidad", "que capacidad",
-    "cuál es la", "cual es la",
-    "cuál es el", "cual es el",
-    "qué tiene", "que tiene",
-    "qué usa", "que usa",
+# Palabras que indican pregunta de especificación técnica del equipo.
+# Cuando aparecen, se fuerza recuperación adicional desde cap9 (tabla de specs).
+_SPEC_WORDS = frozenset({
+    "marca", "fabricante", "modelo", "tipo",
+    "lleva", "tiene", "usa", "equipa",
+    "qué", "que", "cuál", "cual",
+    "transmisión", "transmision", "motor", "frenos", "freno",
+    "suspensión", "suspension", "llantas", "aceite", "presión",
+    "presion", "capacidad", "potencia", "peso", "dimensión", "dimension",
 })
 
+# Nombre exacto del documento de especificaciones en Pinecone
+_SPECS_DOC = "cap9-especificaciones-trs4531 (1).pdf"
 
-def _alt_query(question: str) -> str | None:
-    """Devuelve una reformulación con lenguaje técnico del documento, o None."""
+
+def _is_spec_question(question: str) -> bool:
+    """True si la pregunta es sobre especificaciones técnicas del equipo."""
     q = question.lower()
-    # Sinónimos directos
+    return sum(1 for w in _SPEC_WORDS if w in q) >= 2
+
+
+def _synonym_query(question: str) -> str | None:
+    """Reformula con términos técnicos del documento, o None si no aplica."""
+    q = question.lower()
     for colloquial, technical in _SYNONYM_MAP.items():
         if colloquial in q:
             return q.replace(colloquial, technical)
-    # Preguntas de especificaciones: añadir contexto de tabla técnica para
-    # que el embedding busque en cap9 y no solo en capítulos de cabina/operación
-    if any(trigger in q for trigger in _SPEC_TRIGGERS):
-        return "especificaciones técnicas fabricante modelo " + q
     return None
 
 
 async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
-    """Genera embeddings, busca en Pinecone con dual-query y devuelve top sources."""
+    """Búsqueda dual en Pinecone: query normal + refuerzo de cap9 para preguntas de specs."""
     from app.services.embeddings.factory import get_embedding_provider
     from app.services.pinecone_service import PineconeService
 
     embedder = get_embedding_provider()
     pinecone  = PineconeService()
 
-    # Búsqueda primaria con la pregunta original
     embedding = await embedder.embed(question)
     sources   = await pinecone.search(embedding, top_k=_RAG_TOP_K)
+    seen      = {(s.document_name, s.page, s.chunk_index) for s in sources}
 
-    # Búsqueda secundaria con terminología técnica del documento (si aplica)
-    alt = _alt_query(question)
-    if alt:
-        alt_embedding = await embedder.embed(alt)
-        alt_sources   = await pinecone.search(alt_embedding, top_k=_RAG_TOP_K // 2)
-        # Deduplicar por (document_name, page, chunk_index)
-        seen = {(s.document_name, s.page, s.chunk_index) for s in sources}
-        for s in alt_sources:
+    def _merge(extra: list) -> None:
+        for s in extra:
             key = (s.document_name, s.page, s.chunk_index)
             if key not in seen:
                 seen.add(key)
                 sources.append(s)
-        sources.sort(key=lambda x: x.score, reverse=True)
-        sources = sources[:_RAG_TOP_K]
 
-    return sources, ""
+    # Reformulación con sinónimos técnicos (ej: "marca" → "fabricante modelo")
+    alt_text = _synonym_query(question)
+    if alt_text:
+        alt_emb  = await embedder.embed(alt_text)
+        _merge(await pinecone.search(alt_emb, top_k=_RAG_TOP_K // 2))
+
+    # Refuerzo directo desde cap9 para preguntas de especificaciones:
+    # fuerza que la tabla de CARACTERISTICAS TECNICAS esté siempre en el contexto.
+    if _is_spec_question(question):
+        cap9_sources = await pinecone.search(
+            embedding,
+            top_k=8,
+            filter={"document_name": {"$eq": _SPECS_DOC}},
+        )
+        _merge(cap9_sources)
+
+    sources.sort(key=lambda x: x.score, reverse=True)
+    return sources[:_RAG_TOP_K], ""
 
 
 @router.post("", response_model=ChatResponse)
