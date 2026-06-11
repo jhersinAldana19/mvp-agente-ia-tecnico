@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import logoTecport from '../../assets/branding/logo-tecport.png'
 
 const NAV_ITEMS = [
   {
@@ -40,12 +41,11 @@ function Sidebar({ onClose }) {
     <aside className="w-60 bg-primary flex flex-col h-full">
       <div className="p-5 border-b border-white/10">
         <img
-          src="/logo-tecport.png"
+          src={logoTecport}
           alt="TECPORT AI"
-          className="h-8 w-auto"
-          onError={(e) => { e.currentTarget.style.display = 'none' }}
+          className="h-10 w-auto brightness-0 invert"
         />
-        <p className="text-white/60 text-xs mt-1">Panel administrativo</p>
+        <p className="text-white/60 text-xs mt-2">Panel administrativo</p>
       </div>
 
       <nav className="flex-1 p-3 space-y-1" aria-label="Menú admin">
@@ -117,10 +117,9 @@ export default function AdminLayout({ children }) {
             </svg>
           </button>
           <img
-            src="/logo-tecport.png"
+            src={logoTecport}
             alt="TECPORT AI"
             className="h-7 w-auto"
-            onError={(e) => { e.currentTarget.style.display = 'none' }}
           />
         </header>
 

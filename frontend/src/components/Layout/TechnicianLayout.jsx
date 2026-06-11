@@ -54,11 +54,11 @@ export default function TechnicianLayout({ children }) {
     <div className="min-h-screen flex flex-col bg-surface">
       <header className="bg-white border-b border-border sticky top-0 z-20">
         <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-between h-14">
+          <div className="flex items-center justify-between h-14 lg:h-20">
 
             {/* Logo */}
             <div className="flex items-center">
-              <img src={logoTecport} alt="TECPORT AI" className="h-8 w-auto" />
+              <img src={logoTecport} alt="TECPORT AI" className="h-8 lg:h-14 w-auto" />
             </div>
 
             {/* Nav */}

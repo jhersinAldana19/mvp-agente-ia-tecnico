@@ -132,6 +132,8 @@ function ConversationModal({ record, onClose }) {
   )
 }
 
+const PAGE_SIZE = 10
+
 /* ── Página principal ── */
 export default function AdminHistoryPage() {
   const [records, setRecords]   = useState([])
@@ -142,6 +144,7 @@ export default function AdminHistoryPage() {
   const [fetched, setFetched]   = useState(false)
   const [error, setError]       = useState('')
   const [modalRecord, setModalRecord] = useState(null)
+  const [page, setPage]         = useState(1)
 
   const fetchHistory = async () => {
     setIsLoading(true)
@@ -151,6 +154,7 @@ export default function AdminHistoryPage() {
         params: { search, date_from: dateFrom, date_to: dateTo },
       })
       setRecords(data)
+      setPage(1)
       setFetched(true)
     } catch (err) {
       setError(err.message)
@@ -161,7 +165,11 @@ export default function AdminHistoryPage() {
 
   useEffect(() => { fetchHistory() }, [])
 
-  const handleFilter = (e) => { e.preventDefault(); fetchHistory() }
+  const handleFilter  = (e) => { e.preventDefault(); fetchHistory() }
+  const totalPages    = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
+  const pageRecords   = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const rangeStart    = records.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
+  const rangeEnd      = Math.min(page * PAGE_SIZE, records.length)
 
   return (
     <AdminLayout>
@@ -213,7 +221,7 @@ export default function AdminHistoryPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {records.map((record) => (
+                {pageRecords.map((record) => (
                   <tr key={record.id} className="hover:bg-surface/50 transition-colors">
                     <td className="py-3 px-4 font-medium text-text-main">
                       {record.profiles?.full_name || '—'}
@@ -246,7 +254,7 @@ export default function AdminHistoryPage() {
 
           {/* Mobile */}
           <div className="sm:hidden divide-y divide-border">
-            {records.map((record) => (
+            {pageRecords.map((record) => (
               <div key={record.id} className="p-4 space-y-1">
                 <p className="font-medium text-text-main text-sm">
                   {record.profiles?.full_name || '—'}
@@ -264,8 +272,48 @@ export default function AdminHistoryPage() {
             ))}
           </div>
 
-          <div className="px-4 py-3 border-t border-border bg-surface text-xs text-text-muted">
-            Mostrando {records.length} resultado{records.length !== 1 ? 's' : ''}
+          {/* Paginación */}
+          <div className="px-4 py-3 border-t border-border bg-surface flex flex-col sm:flex-row
+                          items-center justify-between gap-2">
+            <span className="text-xs text-text-muted">
+              {records.length === 0
+                ? 'Sin resultados'
+                : `Mostrando ${rangeStart}–${rangeEnd} de ${records.length} resultado${records.length !== 1 ? 's' : ''}`}
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 1}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-border
+                             text-text-muted hover:bg-surface disabled:opacity-40
+                             disabled:cursor-not-allowed transition-colors"
+                >
+                  ← Anterior
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setPage(p)}
+                    className={`w-7 h-7 text-xs rounded-lg border transition-colors
+                      ${p === page
+                        ? 'bg-primary text-white border-primary font-semibold'
+                        : 'border-border text-text-muted hover:bg-surface'}`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={page === totalPages}
+                  className="px-2.5 py-1 text-xs rounded-lg border border-border
+                             text-text-muted hover:bg-surface disabled:opacity-40
+                             disabled:cursor-not-allowed transition-colors"
+                >
+                  Siguiente →
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

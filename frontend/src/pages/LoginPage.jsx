@@ -83,17 +83,17 @@ export default function LoginPage() {
                       shadow-2xl relative z-10">
 
         {/* Logo */}
-        <div className="mb-8">
+        <div className="mb-8 flex justify-center">
           <img
             src={logoTecport}
             alt="TECPORT"
-            className="h-10 w-auto"
+            className="h-16 w-auto"
             onError={(e) => { e.currentTarget.style.display = 'none' }}
           />
         </div>
 
         {/* Encabezado */}
-        <div className="mb-8">
+        <div className="mb-8 text-center">
           <h1 className="text-2xl font-bold tracking-wide text-text-main uppercase">
             Iniciar sesión
           </h1>
@@ -180,7 +180,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="mt-auto pt-10 text-xs text-text-muted text-center">
-          © 2025 TECPORT. Todos los derechos reservados.
+          © 2026 TECPORT. Todos los derechos reservados.
         </p>
       </div>
     </div>
