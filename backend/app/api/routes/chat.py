@@ -13,8 +13,7 @@ router = APIRouter()
 
 _RAG_TOP_K = 12
 
-# Términos coloquiales del usuario → equivalentes técnicos usados en los documentos.
-# Permite recuperar chunks que usan "fabricante" aunque el usuario escriba "marca".
+# Términos coloquiales → equivalentes técnicos usados en los documentos.
 _SYNONYM_MAP = {
     "marca":         "fabricante modelo",
     "quién fabrica": "fabricante",
@@ -24,13 +23,34 @@ _SYNONYM_MAP = {
     "proveedor":     "fabricante proveedor",
 }
 
+# Palabras que indican preguntas del tipo "¿qué X tiene/lleva la máquina?"
+# → hace falta recuperar tablas de especificaciones técnicas (cap9)
+_SPEC_TRIGGERS = frozenset({
+    "lleva", "lleva el", "lleva la",
+    "qué tipo", "que tipo", "qué modelo", "que modelo",
+    "qué transmisión", "que transmision",
+    "qué motor", "que motor",
+    "qué aceite", "que aceite",
+    "qué presión", "que presion",
+    "qué capacidad", "que capacidad",
+    "cuál es la", "cual es la",
+    "cuál es el", "cual es el",
+    "qué tiene", "que tiene",
+    "qué usa", "que usa",
+})
+
 
 def _alt_query(question: str) -> str | None:
-    """Devuelve una reformulación técnica de la pregunta, o None si no aplica."""
+    """Devuelve una reformulación con lenguaje técnico del documento, o None."""
     q = question.lower()
+    # Sinónimos directos
     for colloquial, technical in _SYNONYM_MAP.items():
         if colloquial in q:
             return q.replace(colloquial, technical)
+    # Preguntas de especificaciones: añadir contexto de tabla técnica para
+    # que el embedding busque en cap9 y no solo en capítulos de cabina/operación
+    if any(trigger in q for trigger in _SPEC_TRIGGERS):
+        return "especificaciones técnicas fabricante modelo " + q
     return None
 
 

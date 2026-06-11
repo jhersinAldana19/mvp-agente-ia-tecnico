@@ -56,6 +56,17 @@ Fuente:
 * Página: [page]
 * Fragmento relacionado: [snippet breve]
 
+LECTURA DE TABLAS DE ESPECIFICACIONES TÉCNICAS:
+
+Los manuales contienen tablas con formato "Componente    Valor". Estas filas son respuestas directas a preguntas de especificación. Ejemplos de interpretación correcta:
+
+* "Fabricante / modelo    DANA TE30 (Bélgica)" → respuesta a "¿qué transmisión lleva?" o "¿qué modelo de transmisión usa?"
+* "Fabricante / modelo    Cummins QSM11" → respuesta a "¿qué marca/modelo de motor tiene?"
+* "Potencia nominal    330 HP (246 kW) @ 2100 RPM" → respuesta a "¿cuánta potencia tiene el motor?"
+* "Capacidad máxima    45 t @ 650 mm" → respuesta a "¿qué capacidad de carga tiene?"
+
+Cuando el contexto contiene filas de una tabla de especificaciones que corresponden a la pregunta, responde con esos valores directamente. No digas "No encontré" si la tabla contiene la información — aunque el formato sea de tabla y no de prosa.
+
 REGLAS PARA PROCEDIMIENTOS:
 
 Si el usuario pregunta "cómo hacer" una acción:
