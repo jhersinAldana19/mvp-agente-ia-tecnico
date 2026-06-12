@@ -66,7 +66,7 @@ function resolveNode(ids) {
 
 // ─── Icono PDF ────────────────────────────────────────────────────────────────
 function IconPdf({ size = 'md' }) {
-  const cls = size === 'sm' ? 'w-8 h-10' : 'w-10 h-12'
+  const cls = size === 'sm' ? 'w-8 h-10' : size === 'lg' ? 'w-16 h-20' : 'w-10 h-12'
   return (
     <svg className={cls} viewBox="0 0 32 40" fill="none">
       <rect width="32" height="40" rx="3" fill="#fee2e2" />
@@ -201,25 +201,27 @@ function PdfViewer({ file, onClose }) {
         )}
         {blobUrl && !loading && (
           isMobileDevice ? (
-            /* En móvil: iframe + botón de respaldo visible */
-            <div className="flex flex-col h-full">
-              <iframe
-                src={blobUrl}
-                title={file.name}
-                className="flex-1 w-full border-0"
-              />
-              <div className="flex-shrink-0 p-3 bg-white border-t border-border flex gap-2 justify-center">
-                <button
-                  onClick={openInTab}
-                  className="btn-primary flex items-center gap-2 text-xs"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                  Abrir en Safari / navegador
-                </button>
+            /* iOS/Android: enlace de apertura nativa — abre el visor PDF del sistema */
+            <div className="flex flex-col items-center justify-center h-full gap-6 px-6">
+              <div className="flex flex-col items-center gap-3 text-center">
+                <IconPdf size="lg" />
+                <p className="text-sm font-semibold text-text-main">{file.name}</p>
+                <p className="text-xs text-text-muted">
+                  Toca el botón para abrir el PDF en el visor de tu dispositivo
+                </p>
               </div>
+              {/* eslint-disable-next-line react/jsx-no-target-blank */}
+              <a
+                href={blobUrl}
+                download={file.name + '.pdf'}
+                className="btn-primary flex items-center gap-2 text-sm px-6 py-3 rounded-xl"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                    d="M12 10v6m0 0l-3-3m3 3l3-3M3 17a4 4 0 004 4h10a4 4 0 004-4v-1" />
+                </svg>
+                Abrir / Descargar PDF
+              </a>
             </div>
           ) : (
             <iframe

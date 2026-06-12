@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import logoTecport from '../../assets/branding/logo-tecport.png'
 
@@ -7,7 +7,6 @@ const NAV_ITEMS = [
   { to: '/chat',      label: 'Chat' },
   { to: '/history',   label: 'Historial' },
   { to: '/documents', label: 'Documentos' },
-  { to: '/profile',   label: 'Perfil' },
 ]
 
 function UserChip({ profile }) {
@@ -17,8 +16,11 @@ function UserChip({ profile }) {
     : '?'
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Avatar */}
+    <Link
+      to="/profile"
+      className="flex items-center gap-2 rounded-full hover:opacity-80 transition-opacity"
+      title="Ver perfil"
+    >
       <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border">
         {profile?.avatar_url && !broken ? (
           <img
@@ -34,11 +36,10 @@ function UserChip({ profile }) {
           </div>
         )}
       </div>
-      {/* Nombre — solo visible en pantallas medianas+ */}
       <span className="hidden md:block text-sm font-medium text-text-main max-w-[120px] truncate">
         {profile?.full_name || ''}
       </span>
-    </div>
+    </Link>
   )
 }
 
@@ -58,8 +59,8 @@ export default function TechnicianLayout({ children, fullWidth = false, bgImage 
           <div className="flex items-center justify-between h-14 lg:h-20">
 
             {/* Logo */}
-            <div className="flex items-center">
-              <img src={logoTecport} alt="TECPORT AI" className="h-6 sm:h-8 lg:h-14 w-auto flex-shrink-0" />
+            <div className="flex items-center flex-shrink-0">
+              <img src={logoTecport} alt="TECPORT AI" className="h-6 sm:h-8 lg:h-14 w-auto" />
             </div>
 
             {/* Nav */}
@@ -77,8 +78,8 @@ export default function TechnicianLayout({ children, fullWidth = false, bgImage 
               ))}
             </nav>
 
-            {/* Usuario + logout */}
-            <div className="flex items-center gap-3">
+            {/* Avatar (→ perfil) + logout */}
+            <div className="flex items-center gap-2 flex-shrink-0">
               <UserChip profile={profile} />
               <button
                 onClick={handleSignOut}
