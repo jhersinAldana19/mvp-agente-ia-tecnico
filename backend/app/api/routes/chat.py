@@ -11,7 +11,11 @@ from app.services.supabase_service import SupabaseService
 
 router = APIRouter()
 
-_RAG_TOP_K = 12
+_RAG_TOP_K            = 12
+_RAG_TOP_K_COMERCIAL  = 4   # slots para brochures en cada consulta
+_NS_TECNICO           = "trs4531"
+_NS_COMERCIAL         = "trs4531-comercial"
+_SPECS_DOC            = "cap9-especificaciones-trs4531 (1).pdf"
 
 # Términos coloquiales → equivalentes técnicos usados en los documentos.
 _SYNONYM_MAP = {
@@ -54,7 +58,7 @@ def _synonym_query(question: str) -> str | None:
 
 
 async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
-    """Búsqueda dual en Pinecone: query normal + refuerzo de cap9 para preguntas de specs."""
+    """Búsqueda multi-namespace: manuales técnicos + brochures comerciales."""
     from app.services.embeddings.factory import get_embedding_provider
     from app.services.pinecone_service import PineconeService
 
@@ -62,8 +66,12 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     pinecone  = PineconeService()
 
     embedding = await embedder.embed(question)
-    sources   = await pinecone.search(embedding, top_k=_RAG_TOP_K)
-    seen      = {(s.document_name, s.page, s.chunk_index) for s in sources}
+
+    # ── 1. Búsqueda principal en manuales técnicos ───────────────────────────
+    sources = await pinecone.search(
+        embedding, top_k=_RAG_TOP_K, namespace=_NS_TECNICO,
+    )
+    seen = {(s.document_name, s.page, s.chunk_index) for s in sources}
 
     def _merge(extra: list) -> None:
         for s in extra:
@@ -72,21 +80,27 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
                 seen.add(key)
                 sources.append(s)
 
-    # Reformulación con sinónimos técnicos (ej: "marca" → "fabricante modelo")
+    # ── 2. Reformulación con sinónimos técnicos ("marca" → "fabricante modelo")
     alt_text = _synonym_query(question)
     if alt_text:
-        alt_emb  = await embedder.embed(alt_text)
-        _merge(await pinecone.search(alt_emb, top_k=_RAG_TOP_K // 2))
+        alt_emb = await embedder.embed(alt_text)
+        _merge(await pinecone.search(
+            alt_emb, top_k=_RAG_TOP_K // 2, namespace=_NS_TECNICO,
+        ))
 
-    # Refuerzo directo desde cap9 para preguntas de especificaciones:
-    # fuerza que la tabla de CARACTERISTICAS TECNICAS esté siempre en el contexto.
+    # ── 3. Refuerzo cap9 para preguntas de especificaciones ──────────────────
     if _is_spec_question(question):
-        cap9_sources = await pinecone.search(
+        _merge(await pinecone.search(
             embedding,
             top_k=8,
+            namespace=_NS_TECNICO,
             filter={"document_name": {"$eq": _SPECS_DOC}},
-        )
-        _merge(cap9_sources)
+        ))
+
+    # ── 4. Búsqueda en brochures comerciales (siempre) ───────────────────────
+    _merge(await pinecone.search(
+        embedding, top_k=_RAG_TOP_K_COMERCIAL, namespace=_NS_COMERCIAL,
+    ))
 
     sources.sort(key=lambda x: x.score, reverse=True)
     return sources[:_RAG_TOP_K], ""

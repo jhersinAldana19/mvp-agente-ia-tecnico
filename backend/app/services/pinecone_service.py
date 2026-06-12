@@ -17,9 +17,10 @@ class PineconeService:
         embedding: List[float],
         top_k: int = _DEFAULT_TOP_K,
         filter: dict | None = None,
+        namespace: str | None = None,
     ) -> List[SourceItem]:
         kwargs: dict = dict(
-            namespace=settings.pinecone_namespace,
+            namespace=namespace or settings.pinecone_namespace,
             vector=embedding,
             top_k=top_k,
             include_metadata=True,
