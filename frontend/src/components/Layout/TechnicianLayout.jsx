@@ -42,7 +42,7 @@ function UserChip({ profile }) {
   )
 }
 
-export default function TechnicianLayout({ children, fullWidth = false }) {
+export default function TechnicianLayout({ children, fullWidth = false, bgImage = null }) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -59,7 +59,7 @@ export default function TechnicianLayout({ children, fullWidth = false }) {
 
             {/* Logo */}
             <div className="flex items-center">
-              <img src={logoTecport} alt="TECPORT AI" className="h-8 lg:h-14 w-auto" />
+              <img src={logoTecport} alt="TECPORT AI" className="h-6 sm:h-8 lg:h-14 w-auto flex-shrink-0" />
             </div>
 
             {/* Nav */}
@@ -98,7 +98,10 @@ export default function TechnicianLayout({ children, fullWidth = false }) {
         </div>
       </header>
 
-      <main className={`flex-1 w-full px-4 py-6 ${fullWidth ? '' : 'max-w-4xl mx-auto'}`}>
+      <main
+        className={`flex-1 w-full px-4 py-6 ${fullWidth ? '' : 'max-w-4xl mx-auto'}`}
+        style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
+      >
         {children}
       </main>
     </div>

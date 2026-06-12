@@ -2,8 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import TechnicianLayout from '../components/Layout/TechnicianLayout'
 import api from '../services/api'
 import imgCarpeta from '../assets/documentos/imagen-carpeta.webp'
+import fondoDocumentos from '../assets/documentos/fondo-documentos.webp'
 
-// ─── Árbol de documentos (estructura estática) ────────────────────────────────
+// ─── Árbol de documentos ──────────────────────────────────────────────────────
 const TREE = [
   {
     id: 'manuales',
@@ -51,9 +52,6 @@ const TREE = [
   },
 ]
 
-// ─── Utilidades ───────────────────────────────────────────────────────────────
-
-/** Dado un array de IDs de breadcrumb, devuelve el nodo actual del árbol */
 function resolveNode(ids) {
   if (ids.length === 0) return { id: 'root', name: 'Documentos', type: 'folder', children: TREE }
   let nodes = TREE
@@ -66,70 +64,64 @@ function resolveNode(ids) {
   return node
 }
 
-// ─── Iconos ───────────────────────────────────────────────────────────────────
-
-function IconPdf() {
+// ─── Icono PDF ────────────────────────────────────────────────────────────────
+function IconPdf({ size = 'md' }) {
+  const cls = size === 'sm' ? 'w-8 h-10' : 'w-10 h-12'
   return (
-    <svg className="w-10 h-12 text-red-500" viewBox="0 0 32 40" fill="none">
+    <svg className={cls} viewBox="0 0 32 40" fill="none">
       <rect width="32" height="40" rx="3" fill="#fee2e2" />
-      <rect x="0" y="24" width="32" height="10" rx="0" fill="#ef4444" />
-      <text x="50%" y="33" dominantBaseline="middle" textAnchor="middle"
+      <rect x="0" y="26" width="32" height="10" rx="0" fill="#ef4444" />
+      <text x="50%" y="34.5" dominantBaseline="middle" textAnchor="middle"
         fill="white" fontSize="7" fontWeight="bold" fontFamily="sans-serif">PDF</text>
       <path d="M20 0 L32 12 L20 12 Z" fill="#fca5a5" />
-      <path d="M20 0 L32 12 L20 12 V0Z" fill="#ef4444" opacity="0.4" />
     </svg>
   )
 }
 
-// ─── Tarjeta de carpeta ───────────────────────────────────────────────────────
-
+// ─── Tarjeta carpeta ──────────────────────────────────────────────────────────
 function FolderCard({ name, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border
-                 bg-white hover:border-primary/40 hover:shadow-md transition-all group
-                 cursor-pointer text-center w-full"
+      className="flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl bg-white shadow-sm
+                 hover:bg-blue-50 hover:shadow-md transition-all group cursor-pointer text-center w-full"
     >
-      <img src={imgCarpeta} alt="carpeta" className="w-16 h-16 object-contain
-                group-hover:scale-105 transition-transform" />
-      <span className="text-xs font-semibold text-text-main leading-tight line-clamp-2">
+      <img src={imgCarpeta} alt="carpeta"
+        className="w-12 h-12 sm:w-16 sm:h-16 object-contain group-hover:scale-105 transition-transform" />
+      <span className="text-[11px] sm:text-xs font-semibold text-text-main leading-tight line-clamp-2">
         {name}
       </span>
     </button>
   )
 }
 
-// ─── Tarjeta de archivo ───────────────────────────────────────────────────────
-
+// ─── Tarjeta archivo ──────────────────────────────────────────────────────────
 function FileCard({ name, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center gap-2 p-4 rounded-xl border transition-all
+      className={`flex flex-col items-center gap-2 p-3 sm:p-4 rounded-xl shadow-sm transition-all
                   cursor-pointer text-center w-full group
-                  ${active
-                    ? 'border-primary bg-primary/5 shadow-md'
-                    : 'border-border bg-white hover:border-primary/40 hover:shadow-md'
-                  }`}
+                  ${active ? 'bg-blue-100 shadow-md' : 'bg-white hover:bg-blue-50 hover:shadow-md'}`}
     >
       <div className="group-hover:scale-105 transition-transform">
         <IconPdf />
       </div>
-      <span className="text-xs font-medium text-text-main leading-tight line-clamp-2">
+      <span className="text-[11px] sm:text-xs font-medium text-text-main leading-tight line-clamp-2">
         {name}
       </span>
     </button>
   )
 }
 
-// ─── Viewer PDF ───────────────────────────────────────────────────────────────
-
+// ─── Visor PDF ────────────────────────────────────────────────────────────────
 function PdfViewer({ file, onClose }) {
-  const [blobUrl, setBlobUrl]   = useState(null)
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
+  const [blobUrl, setBlobUrl] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError]    = useState('')
   const prevUrl = useRef(null)
+
+  const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
 
   const load = useCallback(async () => {
     if (!file) return
@@ -155,20 +147,34 @@ function PdfViewer({ file, onClose }) {
   useEffect(() => { load() }, [load])
   useEffect(() => () => { if (prevUrl.current) URL.revokeObjectURL(prevUrl.current) }, [])
 
+  const openInTab = () => {
+    if (blobUrl) window.open(blobUrl, '_blank')
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Header del viewer */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-border flex-shrink-0 bg-white">
-        <div className="flex-shrink-0"><IconPdf /></div>
+    <div className="flex flex-col h-full bg-white">
+      {/* Header */}
+      <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-3 border-b border-border flex-shrink-0">
+        <div className="flex-shrink-0"><IconPdf size="sm" /></div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-text-main truncate">{file.name}</p>
-          <p className="text-xs text-text-muted truncate">{file.serverPath}</p>
+          <p className="text-xs sm:text-sm font-semibold text-text-main truncate">{file.name}</p>
         </div>
+        {blobUrl && (
+          <button onClick={openInTab}
+            className="flex-shrink-0 p-1.5 rounded-lg hover:bg-surface text-text-muted
+                       hover:text-text-main transition-colors"
+            title="Abrir en nueva pestaña">
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </button>
+        )}
         <button onClick={onClose}
           className="flex-shrink-0 p-1.5 rounded-lg hover:bg-surface text-text-muted
                      hover:text-text-main transition-colors"
           title="Cerrar visor">
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
               d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -181,25 +187,47 @@ function PdfViewer({ file, onClose }) {
           <div className="flex items-center justify-center h-full gap-2 text-text-muted">
             <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
             </svg>
             <span className="text-sm">Cargando documento…</span>
           </div>
         )}
         {error && (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg">
+          <div className="flex items-center justify-center h-full px-4">
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-4 py-3 rounded-lg text-center">
               {error}
             </p>
           </div>
         )}
         {blobUrl && !loading && (
-          <iframe
-            src={blobUrl}
-            title={file.name}
-            className="w-full h-full border-0"
-          />
+          isMobileDevice ? (
+            /* En móvil: iframe + botón de respaldo visible */
+            <div className="flex flex-col h-full">
+              <iframe
+                src={blobUrl}
+                title={file.name}
+                className="flex-1 w-full border-0"
+              />
+              <div className="flex-shrink-0 p-3 bg-white border-t border-border flex gap-2 justify-center">
+                <button
+                  onClick={openInTab}
+                  className="btn-primary flex items-center gap-2 text-xs"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Abrir en Safari / navegador
+                </button>
+              </div>
+            </div>
+          ) : (
+            <iframe
+              src={blobUrl}
+              title={file.name}
+              className="w-full h-full border-0"
+            />
+          )
         )}
       </div>
     </div>
@@ -207,29 +235,23 @@ function PdfViewer({ file, onClose }) {
 }
 
 // ─── Breadcrumb ───────────────────────────────────────────────────────────────
-
 function Breadcrumb({ trail, onNavigate }) {
   return (
-    <nav className="flex items-center gap-1 text-sm flex-wrap">
-      <button
-        onClick={() => onNavigate([])}
-        className="text-primary font-medium hover:underline"
-      >
+    <nav className="flex items-center gap-1 text-xs sm:text-sm flex-wrap min-w-0">
+      <button onClick={() => onNavigate([])} className="text-primary font-medium hover:underline flex-shrink-0">
         Documentos
       </button>
       {trail.map((node, idx) => (
-        <span key={node.id} className="flex items-center gap-1">
-          <svg className="w-3.5 h-3.5 text-text-muted flex-shrink-0" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M9 5l7 7-7 7" />
+        <span key={node.id} className="flex items-center gap-1 min-w-0">
+          <svg className="w-3 h-3 text-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           {idx === trail.length - 1 ? (
-            <span className="text-text-main font-semibold">{node.name}</span>
+            <span className="text-text-main font-semibold truncate max-w-[120px] sm:max-w-none">{node.name}</span>
           ) : (
             <button
               onClick={() => onNavigate(trail.slice(0, idx + 1).map((n) => n.id))}
-              className="text-primary hover:underline"
+              className="text-primary hover:underline truncate max-w-[80px] sm:max-w-none"
             >
               {node.name}
             </button>
@@ -240,20 +262,20 @@ function Breadcrumb({ trail, onNavigate }) {
   )
 }
 
-// ─── Página principal ─────────────────────────────────────────────────────────
-
+// ─── Página ───────────────────────────────────────────────────────────────────
 export default function DocumentsPage() {
-  const [pathIds, setPathIds]       = useState([])   // IDs del breadcrumb actual
-  const [trail, setTrail]           = useState([])   // nodos del breadcrumb
-  const [activeFile, setActiveFile] = useState(null) // archivo seleccionado
+  const [pathIds, setPathIds]       = useState([])
+  const [trail, setTrail]           = useState([])
+  const [activeFile, setActiveFile] = useState(null)
 
   const currentNode = resolveNode(pathIds)
-  const items = currentNode?.children || []
+  const items  = currentNode?.children || []
+  const folders = items.filter((i) => i.type === 'folder')
+  const files   = items.filter((i) => i.type === 'file')
 
   const navigate = (ids) => {
     setPathIds(ids)
     setActiveFile(null)
-    // Reconstruir trail
     const newTrail = []
     let nodes = TREE
     for (const id of ids) {
@@ -266,38 +288,30 @@ export default function DocumentsPage() {
   }
 
   const openFolder = (node) => navigate([...pathIds, node.id])
-
-  const openFile = (node) => {
-    setActiveFile((prev) => (prev?.id === node.id ? null : node))
-  }
-
-  const folders = items.filter((i) => i.type === 'folder')
-  const files   = items.filter((i) => i.type === 'file')
+  const openFile   = (node) => setActiveFile((prev) => (prev?.id === node.id ? null : node))
 
   return (
-    <TechnicianLayout fullWidth>
+    <TechnicianLayout fullWidth bgImage={fondoDocumentos}>
       <div
-        className="flex gap-0 rounded-xl border border-border overflow-hidden bg-white shadow-sm"
-        style={{ height: 'calc(100dvh - 7rem)', minHeight: '500px' }}
+        className="flex gap-0 rounded-xl overflow-hidden shadow-lg bg-white/95 backdrop-blur-sm"
+        style={{ height: 'calc(100dvh - 7rem)', minHeight: '480px' }}
       >
-
-        {/* ── Panel izquierdo: browser ─────────────────────────────────────── */}
+        {/* ── Browser panel ──────────────────────────────────────────────── */}
         <div
-          className={`flex flex-col border-r border-border overflow-hidden transition-all
-            ${activeFile ? 'w-full lg:w-[46%]' : 'w-full'}`}
+          className={`flex flex-col border-r border-border overflow-hidden transition-all duration-200
+            ${activeFile ? 'w-full lg:w-[45%]' : 'w-full'}`}
         >
-          {/* Barra superior */}
-          <div className="flex items-center gap-3 px-5 py-4 border-b border-border flex-shrink-0 bg-[#f8fafc]">
-            <svg className="w-5 h-5 text-primary flex-shrink-0" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
+          {/* Barra breadcrumb */}
+          <div className="flex items-center gap-2 px-3 sm:px-5 py-3 border-b border-border flex-shrink-0 bg-[#f8fafc]">
+            <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
                 d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
             </svg>
             <Breadcrumb trail={trail} onNavigate={navigate} />
           </div>
 
-          {/* Contenido */}
-          <div className="flex-1 overflow-y-auto p-5">
+          {/* Grid de items */}
+          <div className="flex-1 overflow-y-auto p-3 sm:p-5">
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-text-muted gap-2">
                 <svg className="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -307,26 +321,25 @@ export default function DocumentsPage() {
                 <p className="text-sm">Carpeta vacía</p>
               </div>
             ) : (
-              <div className="space-y-5">
+              <div className="space-y-4 sm:space-y-5">
                 {folders.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+                    <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 sm:mb-3">
                       Carpetas
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                       {folders.map((node) => (
-                        <FolderCard key={node.id} name={node.name}
-                          onClick={() => openFolder(node)} />
+                        <FolderCard key={node.id} name={node.name} onClick={() => openFolder(node)} />
                       ))}
                     </div>
                   </div>
                 )}
                 {files.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+                    <p className="text-[10px] sm:text-xs font-semibold text-text-muted uppercase tracking-wider mb-2 sm:mb-3">
                       Archivos
                     </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 sm:gap-3">
                       {files.map((node) => (
                         <FileCard key={node.id} name={node.name}
                           active={activeFile?.id === node.id}
@@ -340,20 +353,19 @@ export default function DocumentsPage() {
           </div>
         </div>
 
-        {/* ── Panel derecho: visor PDF ─────────────────────────────────────── */}
+        {/* ── Panel PDF desktop ───────────────────────────────────────────── */}
         {activeFile && (
           <div className="hidden lg:flex flex-col flex-1 min-w-0">
             <PdfViewer file={activeFile} onClose={() => setActiveFile(null)} />
           </div>
         )}
 
-        {/* ── Modal móvil: visor PDF ───────────────────────────────────────── */}
+        {/* ── Modal PDF móvil ─────────────────────────────────────────────── */}
         {activeFile && (
-          <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white">
+          <div className="lg:hidden fixed inset-0 z-50 flex flex-col bg-white safe-area-inset">
             <PdfViewer file={activeFile} onClose={() => setActiveFile(null)} />
           </div>
         )}
-
       </div>
     </TechnicianLayout>
   )

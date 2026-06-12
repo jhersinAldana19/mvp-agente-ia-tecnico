@@ -60,7 +60,7 @@
   }
 
   .nav-tab {
-    @apply px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-150;
+    @apply px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium border-b-2 transition-colors duration-150 whitespace-nowrap;
   }
 
   .nav-tab-active {

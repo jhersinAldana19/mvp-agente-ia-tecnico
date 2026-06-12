@@ -33,5 +33,5 @@ async def serve_document(
     return FileResponse(
         path=str(file_path),
         media_type=media_type or "application/octet-stream",
-        filename=file_path.name,
+        headers={"Content-Disposition": "inline"},
     )
