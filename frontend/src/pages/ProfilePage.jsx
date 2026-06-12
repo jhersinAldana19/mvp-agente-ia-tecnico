@@ -10,8 +10,8 @@ import fondoPerfil from '../assets/perfil/fondo-perfil.webp'
 function InfoRow({ label, value }) {
   return (
     <div className="flex items-start py-3 border-b border-border last:border-0">
-      <span className="text-sm text-text-muted w-44 flex-shrink-0">{label}</span>
-      <span className="text-sm text-text-main font-medium">{value}</span>
+      <span className="text-sm text-text-muted w-32 sm:w-44 flex-shrink-0">{label}</span>
+      <span className="text-sm text-text-main font-medium min-w-0 break-all">{value}</span>
     </div>
   )
 }
