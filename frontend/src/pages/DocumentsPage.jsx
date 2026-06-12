@@ -268,11 +268,8 @@ export default function DocumentsPage() {
                 className="w-full h-full object-cover object-center" />
               <div className="absolute inset-0 bg-gradient-to-b from-black/5 to-black/50" />
               <div className="absolute bottom-3 left-4 sm:bottom-4 sm:left-5">
-                <p className="text-white/70 text-[10px] sm:text-xs uppercase tracking-widest font-medium mb-0.5">
-                  TECPORT · Biblioteca
-                </p>
                 <h1 className="text-white text-base sm:text-lg font-bold leading-tight">
-                  Documentos del TRS4531
+                  TECPORT · Documentos
                 </h1>
               </div>
             </div>
