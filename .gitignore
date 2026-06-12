@@ -19,8 +19,6 @@ build/
 .ruff_cache/
 *.so
 
-# ── Documents / PDFs (datos privados del cliente) ──────────────
-backend/documents/
 
 # ── Node / Frontend ────────────────────────────────────────────
 node_modules/

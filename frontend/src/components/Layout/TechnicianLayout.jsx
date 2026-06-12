@@ -4,9 +4,10 @@ import { useAuth } from '../../context/AuthContext'
 import logoTecport from '../../assets/branding/logo-tecport.png'
 
 const NAV_ITEMS = [
-  { to: '/chat',    label: 'Chat' },
-  { to: '/history', label: 'Historial' },
-  { to: '/profile', label: 'Perfil' },
+  { to: '/chat',      label: 'Chat' },
+  { to: '/history',   label: 'Historial' },
+  { to: '/documents', label: 'Documentos' },
+  { to: '/profile',   label: 'Perfil' },
 ]
 
 function UserChip({ profile }) {
@@ -41,7 +42,7 @@ function UserChip({ profile }) {
   )
 }
 
-export default function TechnicianLayout({ children }) {
+export default function TechnicianLayout({ children, fullWidth = false }) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -97,7 +98,7 @@ export default function TechnicianLayout({ children }) {
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl mx-auto w-full px-4 py-6">
+      <main className={`flex-1 w-full px-4 py-6 ${fullWidth ? '' : 'max-w-4xl mx-auto'}`}>
         {children}
       </main>
     </div>
