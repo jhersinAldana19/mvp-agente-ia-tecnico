@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import api from '../services/api'
 import Spinner from '../components/UI/Spinner'
+import fondoPerfil from '../assets/perfil/fondo-perfil.webp'
 
 function InfoRow({ label, value }) {
   return (
@@ -140,124 +141,133 @@ export default function ProfilePage() {
     <TechnicianLayout>
       <div className="max-w-lg mx-auto">
 
-        {/* Avatar */}
-        <div className="card p-8 flex flex-col items-center mb-6">
+        {/* Tarjeta de perfil con banner estilo LinkedIn */}
+        <div className="card overflow-hidden mb-6">
 
-          {/* Foto clickeable */}
-          <div className="relative mb-4 group">
-            <div
-              onClick={handleAvatarClick}
-              className="w-24 h-24 rounded-full overflow-hidden cursor-pointer border-2
-                         border-border hover:border-primary transition-colors"
-            >
-              {profile.avatar_url && !imgBroken ? (
-                <img
-                  src={profile.avatar_url}
-                  alt={profile.full_name}
-                  className="w-full h-full object-cover"
-                  onError={() => setImgBroken(true)}
-                />
-              ) : (
-                <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-primary" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
-                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              )}
-
-              {/* Overlay al hacer hover */}
-              <div className="absolute inset-0 rounded-full bg-black/40 opacity-0
-                              group-hover:opacity-100 transition-opacity flex items-center
-                              justify-center pointer-events-none">
-                {uploading ? (
-                  <Spinner size="sm" />
-                ) : (
-                  <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86
-                         a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0
-                         01-2 2H5a2 2 0 01-2-2V9z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                      d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                )}
-              </div>
-            </div>
-
-            {/* Input oculto */}
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={handleFileChange}
-            />
+          {/* Banner de portada */}
+          <div className="h-32 w-full overflow-hidden">
+            <img src={fondoPerfil} alt="portada" className="w-full h-full object-cover" />
           </div>
 
-          {/* Feedback de carga */}
-          {uploading && (
-            <p className="text-xs text-text-muted mb-2">Subiendo imagen...</p>
-          )}
-          {uploadSuccess && !uploading && (
-            <p className="text-xs text-green-600 mb-2">Foto actualizada correctamente.</p>
-          )}
-          {uploadError && (
-            <p className="text-xs text-red-600 mb-2 text-center max-w-xs">{uploadError}</p>
-          )}
+          {/* Contenido centrado debajo del banner */}
+          <div className="flex flex-col items-center px-8 pb-8">
 
-          <p className="text-xs text-text-muted mb-3">
-            Haz clic en la foto para cambiarla (JPG/PNG/WebP · máx. 2 MB)
-          </p>
+            {/* Avatar — flota sobre el banner con -mt-12 */}
+            <div className="relative -mt-12 mb-3 group">
+              <div
+                onClick={handleAvatarClick}
+                className="w-24 h-24 rounded-full overflow-hidden cursor-pointer
+                           border-4 border-white shadow-md hover:border-primary transition-colors"
+              >
+                {profile.avatar_url && !imgBroken ? (
+                  <img
+                    src={profile.avatar_url}
+                    alt={profile.full_name}
+                    className="w-full h-full object-cover"
+                    onError={() => setImgBroken(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                    <svg className="w-12 h-12 text-primary" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                )}
 
-          {/* Nombre editable */}
-          {editingName ? (
-            <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+                {/* Overlay cámara al hover */}
+                <div className="absolute inset-0 rounded-full bg-black/40 opacity-0
+                                group-hover:opacity-100 transition-opacity flex items-center
+                                justify-center pointer-events-none">
+                  {uploading ? (
+                    <Spinner size="sm" />
+                  ) : (
+                    <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86
+                           a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0
+                           01-2 2H5a2 2 0 01-2-2V9z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                        d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+
               <input
-                autoFocus
-                value={nameValue}
-                onChange={(e) => setNameValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && saveName()}
-                className="input-field text-center text-sm"
-                placeholder="Tu nombre completo"
+                ref={fileRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="hidden"
+                onChange={handleFileChange}
               />
-              {nameError && <p className="text-xs text-red-600">{nameError}</p>}
-              <div className="flex gap-2">
-                <button onClick={saveName} disabled={savingName}
-                  className="btn-primary px-4 py-1.5 text-xs">
-                  {savingName ? 'Guardando…' : 'Guardar'}
-                </button>
-                <button onClick={() => setEditingName(false)}
-                  className="px-4 py-1.5 text-xs border border-border rounded-lg
-                             text-text-muted hover:bg-surface transition-colors">
-                  Cancelar
+            </div>
+
+            {/* Feedback upload */}
+            {uploading && (
+              <p className="text-xs text-text-muted mb-2">Subiendo imagen...</p>
+            )}
+            {uploadSuccess && !uploading && (
+              <p className="text-xs text-green-600 mb-2">Foto actualizada correctamente.</p>
+            )}
+            {uploadError && (
+              <p className="text-xs text-red-600 mb-2 text-center max-w-xs">{uploadError}</p>
+            )}
+
+            <p className="text-xs text-text-muted mb-3">
+              Haz clic en la foto para cambiarla (JPG/PNG/WebP · máx. 2 MB)
+            </p>
+
+            {/* Nombre editable */}
+            {editingName ? (
+              <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+                <input
+                  autoFocus
+                  value={nameValue}
+                  onChange={(e) => setNameValue(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && saveName()}
+                  className="input-field text-center text-sm"
+                  placeholder="Tu nombre completo"
+                />
+                {nameError && <p className="text-xs text-red-600">{nameError}</p>}
+                <div className="flex gap-2">
+                  <button onClick={saveName} disabled={savingName}
+                    className="btn-primary px-4 py-1.5 text-xs">
+                    {savingName ? 'Guardando…' : 'Guardar'}
+                  </button>
+                  <button onClick={() => setEditingName(false)}
+                    className="px-4 py-1.5 text-xs border border-border rounded-lg
+                               text-text-muted hover:bg-surface transition-colors">
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-semibold text-text-main">{profile.full_name}</h1>
+                <button onClick={startEditName}
+                  className="text-text-muted hover:text-primary transition-colors"
+                  title="Editar nombre">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
+                         m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
                 </button>
               </div>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-semibold text-text-main">{profile.full_name}</h1>
-              <button onClick={startEditName}
-                className="text-text-muted hover:text-primary transition-colors"
-                title="Editar nombre">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
-                       m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-            </div>
-          )}
+            )}
 
-          <p className="text-text-muted text-sm mt-1">{profile.email}</p>
-          <div className="mt-2">
-            <RoleBadge role={profile.role} />
+            <p className="text-text-muted text-sm mt-1">{profile.email}</p>
+            <div className="mt-2">
+              <RoleBadge role={profile.role} />
+            </div>
+
           </div>
         </div>
 
-        {/* Info */}
+        {/* Información */}
         <div className="card p-5 mb-4">
           <h2 className="text-sm font-semibold text-text-main mb-2">Información</h2>
           <InfoRow label="Nombre completo"    value={profile.full_name} />
@@ -267,7 +277,7 @@ export default function ProfilePage() {
           <InfoRow label="Miembro desde"      value={formatDate(profile.created_at)} />
         </div>
 
-        {/* Sign out */}
+        {/* Cerrar sesión */}
         <button
           onClick={handleSignOut}
           className="w-full flex items-center justify-center gap-2 py-2.5 px-4
@@ -281,6 +291,7 @@ export default function ProfilePage() {
           </svg>
           Cerrar sesión
         </button>
+
       </div>
     </TechnicianLayout>
   )
