@@ -4,6 +4,26 @@ import EmptyState from '../components/UI/EmptyState'
 import Spinner from '../components/UI/Spinner'
 import api from '../services/api'
 
+function MiniAvatar({ name, avatarUrl }) {
+  const [broken, setBroken] = useState(false)
+  const initials = name
+    ? name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+    : '?'
+  return (
+    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border">
+      {avatarUrl && !broken ? (
+        <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
+          onError={() => setBroken(true)} />
+      ) : (
+        <div className="w-full h-full bg-primary/10 flex items-center justify-center
+                        text-primary text-xs font-semibold">
+          {initials}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const ROLES = ['technician', 'admin']
 
 function RoleBadge({ role }) {
@@ -133,23 +153,28 @@ export default function AdminUsersPage() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
-                {users.map((user) => (
-                  <tr key={user.id} className="hover:bg-surface/50 transition-colors">
-                    <td className="py-3 px-4 font-medium text-text-main">{user.full_name}</td>
-                    <td className="py-3 px-4 text-text-muted">{user.email}</td>
+              <tbody>
+                {users.map((user, idx) => (
+                  <tr key={user.id}
+                    className={`border-b border-border last:border-0 transition-colors
+                      hover:bg-blue-50/40
+                      ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <MiniAvatar name={user.full_name} avatarUrl={user.avatar_url} />
+                        <span className="font-medium text-text-main text-sm">{user.full_name}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 text-text-muted text-sm">{user.email}</td>
                     <td className="py-3 px-4">
                       <RoleBadge role={user.role} />
                     </td>
-                    <td className="py-3 px-4 text-text-muted whitespace-nowrap">
+                    <td className="py-3 px-4 text-text-muted text-sm whitespace-nowrap">
                       {formatDate(user.created_at)}
                     </td>
                     <td className="py-3 px-4">
-                      <RoleSelector
-                        userId={user.id}
-                        currentRole={user.role}
-                        onUpdate={handleRoleUpdate}
-                      />
+                      <RoleSelector userId={user.id} currentRole={user.role}
+                        onUpdate={handleRoleUpdate} />
                     </td>
                   </tr>
                 ))}
@@ -158,21 +183,23 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Mobile cards */}
-          <div className="sm:hidden divide-y divide-border">
-            {users.map((user) => (
-              <div key={user.id} className="p-4 space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-medium text-text-main text-sm">{user.full_name}</p>
-                    <p className="text-xs text-text-muted">{user.email}</p>
+          <div className="sm:hidden">
+            {users.map((user, idx) => (
+              <div key={user.id}
+                className={`p-4 space-y-2 border-b border-border last:border-0
+                  ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <MiniAvatar name={user.full_name} avatarUrl={user.avatar_url} />
+                    <div>
+                      <p className="font-medium text-text-main text-sm">{user.full_name}</p>
+                      <p className="text-xs text-text-muted">{user.email}</p>
+                    </div>
                   </div>
                   <RoleBadge role={user.role} />
                 </div>
-                <RoleSelector
-                  userId={user.id}
-                  currentRole={user.role}
-                  onUpdate={handleRoleUpdate}
-                />
+                <RoleSelector userId={user.id} currentRole={user.role}
+                  onUpdate={handleRoleUpdate} />
               </div>
             ))}
           </div>

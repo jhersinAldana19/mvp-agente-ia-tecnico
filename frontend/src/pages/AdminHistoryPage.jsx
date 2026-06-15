@@ -23,6 +23,26 @@ function truncate(text, max = 80) {
   return text.length > max ? `${text.slice(0, max)}…` : text
 }
 
+function MiniAvatar({ name, avatarUrl }) {
+  const [broken, setBroken] = useState(false)
+  const initials = name
+    ? name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
+    : '?'
+  return (
+    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border">
+      {avatarUrl && !broken ? (
+        <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
+          onError={() => setBroken(true)} />
+      ) : (
+        <div className="w-full h-full bg-primary/10 flex items-center justify-center
+                        text-primary text-xs font-semibold">
+          {initials}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const MD = {
   p:      ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
   ul:     ({ children }) => <ul className="mb-1 pl-4 list-disc">{children}</ul>,
@@ -220,25 +240,35 @@ export default function AdminHistoryPage() {
                   ))}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
-                {pageRecords.map((record) => (
-                  <tr key={record.id} className="hover:bg-surface/50 transition-colors">
-                    <td className="py-3 px-4 font-medium text-text-main">
-                      {record.profiles?.full_name || '—'}
+              <tbody>
+                {pageRecords.map((record, idx) => (
+                  <tr key={record.id}
+                    className={`border-b border-border last:border-0 transition-colors
+                      hover:bg-blue-50/40
+                      ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2">
+                        <MiniAvatar
+                          name={record.profiles?.full_name}
+                          avatarUrl={record.profiles?.avatar_url}
+                        />
+                        <span className="font-medium text-text-main text-sm">
+                          {record.profiles?.full_name || '—'}
+                        </span>
+                      </div>
                     </td>
-                    <td className="py-3 px-4 text-text-muted">
+                    <td className="py-3 px-4 text-text-muted text-sm">
                       {record.profiles?.email || '—'}
                     </td>
-                    <td className="py-3 px-4 text-text-main max-w-xs">
+                    <td className="py-3 px-4 text-text-main text-sm max-w-xs">
                       {truncate(record.content)}
                     </td>
-                    <td className="py-3 px-4 text-text-muted whitespace-nowrap">
+                    <td className="py-3 px-4 text-text-muted text-sm whitespace-nowrap">
                       {formatDateTime(record.created_at)}
                     </td>
                     <td className="py-3 px-4">
                       {record.session_id ? (
-                        <button
-                          onClick={() => setModalRecord(record)}
+                        <button onClick={() => setModalRecord(record)}
                           className="text-primary text-xs font-medium hover:underline">
                           Ver detalle
                         </button>
@@ -253,13 +283,23 @@ export default function AdminHistoryPage() {
           </div>
 
           {/* Mobile */}
-          <div className="sm:hidden divide-y divide-border">
-            {pageRecords.map((record) => (
-              <div key={record.id} className="p-4 space-y-1">
-                <p className="font-medium text-text-main text-sm">
-                  {record.profiles?.full_name || '—'}
-                </p>
-                <p className="text-xs text-text-muted">{record.profiles?.email || '—'}</p>
+          <div className="sm:hidden">
+            {pageRecords.map((record, idx) => (
+              <div key={record.id}
+                className={`p-4 space-y-1.5 border-b border-border last:border-0
+                  ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                <div className="flex items-center gap-2">
+                  <MiniAvatar
+                    name={record.profiles?.full_name}
+                    avatarUrl={record.profiles?.avatar_url}
+                  />
+                  <div>
+                    <p className="font-medium text-text-main text-sm">
+                      {record.profiles?.full_name || '—'}
+                    </p>
+                    <p className="text-xs text-text-muted">{record.profiles?.email || '—'}</p>
+                  </div>
+                </div>
                 <p className="text-sm text-text-main">{truncate(record.content)}</p>
                 <p className="text-xs text-text-muted">{formatDateTime(record.created_at)}</p>
                 {record.session_id && (
