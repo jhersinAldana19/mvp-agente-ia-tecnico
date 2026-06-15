@@ -136,18 +136,15 @@ export default function AdminUsersPage() {
       )}
 
       {!isLoading && users.length > 0 && (
-        <div className="card overflow-hidden">
+        <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
           {/* Desktop table */}
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-surface">
+                <tr className="border-b-2 border-border">
                   {['Nombre', 'Correo', 'Rol', 'Miembro desde', 'Acciones'].map((h) => (
-                    <th
-                      key={h}
-                      className="text-left py-3 px-4 text-xs font-semibold text-text-muted
-                                 uppercase tracking-wide"
-                    >
+                    <th key={h}
+                      className="text-left py-4 px-5 text-sm font-bold text-text-main">
                       {h}
                     </th>
                   ))}
@@ -157,22 +154,22 @@ export default function AdminUsersPage() {
                 {users.map((user, idx) => (
                   <tr key={user.id}
                     className={`border-b border-border last:border-0 transition-colors
-                      hover:bg-blue-50/40
-                      ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
+                      hover:bg-primary-light/40
+                      ${idx % 2 === 0 ? 'bg-white' : 'bg-surface/60'}`}>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
                         <MiniAvatar name={user.full_name} avatarUrl={user.avatar_url} />
-                        <span className="font-medium text-text-main text-sm">{user.full_name}</span>
+                        <span className="font-semibold text-text-main text-sm">{user.full_name}</span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-text-muted text-sm">{user.email}</td>
-                    <td className="py-3 px-4">
+                    <td className="py-4 px-5 text-text-muted text-sm">{user.email}</td>
+                    <td className="py-4 px-5">
                       <RoleBadge role={user.role} />
                     </td>
-                    <td className="py-3 px-4 text-text-muted text-sm whitespace-nowrap">
+                    <td className="py-4 px-5 text-text-muted text-xs whitespace-nowrap">
                       {formatDate(user.created_at)}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-4 px-5">
                       <RoleSelector userId={user.id} currentRole={user.role}
                         onUpdate={handleRoleUpdate} />
                     </td>
@@ -183,16 +180,15 @@ export default function AdminUsersPage() {
           </div>
 
           {/* Mobile cards */}
-          <div className="sm:hidden">
+          <div className="sm:hidden divide-y divide-border">
             {users.map((user, idx) => (
               <div key={user.id}
-                className={`p-4 space-y-2 border-b border-border last:border-0
-                  ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
+                className={`p-4 space-y-3 ${idx % 2 === 0 ? 'bg-white' : 'bg-surface/60'}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <MiniAvatar name={user.full_name} avatarUrl={user.avatar_url} />
                     <div>
-                      <p className="font-medium text-text-main text-sm">{user.full_name}</p>
+                      <p className="font-semibold text-text-main text-sm">{user.full_name}</p>
                       <p className="text-xs text-text-muted">{user.email}</p>
                     </div>
                   </div>

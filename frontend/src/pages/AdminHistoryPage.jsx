@@ -229,14 +229,17 @@ export default function AdminHistoryPage() {
       )}
 
       {!isLoading && records.length > 0 && (
-        <div className="card overflow-hidden">
+        <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+          {/* Desktop */}
           <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="w-full">
               <thead>
-                <tr className="border-b border-border bg-surface">
-                  {['Usuario','Correo','Pregunta','Fecha',''].map((h) => (
-                    <th key={h} className="text-left py-3 px-4 text-xs font-semibold
-                                           text-text-muted uppercase tracking-wide">{h}</th>
+                <tr className="border-b-2 border-border">
+                  {['Usuario', 'Correo', 'Pregunta', 'Fecha', ''].map((h) => (
+                    <th key={h}
+                      className="text-left py-4 px-5 text-sm font-bold text-text-main">
+                      {h}
+                    </th>
                   ))}
                 </tr>
               </thead>
@@ -244,32 +247,32 @@ export default function AdminHistoryPage() {
                 {pageRecords.map((record, idx) => (
                   <tr key={record.id}
                     className={`border-b border-border last:border-0 transition-colors
-                      hover:bg-blue-50/40
-                      ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                    <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
+                      hover:bg-primary-light/40
+                      ${idx % 2 === 0 ? 'bg-white' : 'bg-surface/60'}`}>
+                    <td className="py-4 px-5">
+                      <div className="flex items-center gap-3">
                         <MiniAvatar
                           name={record.profiles?.full_name}
                           avatarUrl={record.profiles?.avatar_url}
                         />
-                        <span className="font-medium text-text-main text-sm">
+                        <span className="font-semibold text-text-main text-sm">
                           {record.profiles?.full_name || '—'}
                         </span>
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-text-muted text-sm">
+                    <td className="py-4 px-5 text-text-muted text-sm">
                       {record.profiles?.email || '—'}
                     </td>
-                    <td className="py-3 px-4 text-text-main text-sm max-w-xs">
+                    <td className="py-4 px-5 text-text-main text-sm max-w-xs">
                       {truncate(record.content)}
                     </td>
-                    <td className="py-3 px-4 text-text-muted text-sm whitespace-nowrap">
+                    <td className="py-4 px-5 text-text-muted text-xs whitespace-nowrap">
                       {formatDateTime(record.created_at)}
                     </td>
-                    <td className="py-3 px-4">
+                    <td className="py-4 px-5">
                       {record.session_id ? (
                         <button onClick={() => setModalRecord(record)}
-                          className="text-primary text-xs font-medium hover:underline">
+                          className="text-primary text-sm font-semibold hover:underline transition-opacity hover:opacity-70">
                           Ver detalle
                         </button>
                       ) : (
@@ -283,73 +286,63 @@ export default function AdminHistoryPage() {
           </div>
 
           {/* Mobile */}
-          <div className="sm:hidden">
+          <div className="sm:hidden divide-y divide-border">
             {pageRecords.map((record, idx) => (
               <div key={record.id}
-                className={`p-4 space-y-1.5 border-b border-border last:border-0
-                  ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50'}`}>
-                <div className="flex items-center gap-2">
+                className={`p-4 space-y-2 ${idx % 2 === 0 ? 'bg-white' : 'bg-surface/60'}`}>
+                <div className="flex items-center gap-3">
                   <MiniAvatar
                     name={record.profiles?.full_name}
                     avatarUrl={record.profiles?.avatar_url}
                   />
                   <div>
-                    <p className="font-medium text-text-main text-sm">
+                    <p className="font-semibold text-text-main text-sm">
                       {record.profiles?.full_name || '—'}
                     </p>
                     <p className="text-xs text-text-muted">{record.profiles?.email || '—'}</p>
                   </div>
                 </div>
-                <p className="text-sm text-text-main">{truncate(record.content)}</p>
-                <p className="text-xs text-text-muted">{formatDateTime(record.created_at)}</p>
-                {record.session_id && (
-                  <button onClick={() => setModalRecord(record)}
-                    className="text-primary text-xs font-medium hover:underline">
-                    Ver detalle
-                  </button>
-                )}
+                <p className="text-sm text-text-main leading-relaxed">{truncate(record.content)}</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-text-muted">{formatDateTime(record.created_at)}</p>
+                  {record.session_id && (
+                    <button onClick={() => setModalRecord(record)}
+                      className="text-primary text-xs font-semibold hover:underline">
+                      Ver detalle
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
 
           {/* Paginación */}
-          <div className="px-4 py-3 border-t border-border bg-surface flex flex-col sm:flex-row
-                          items-center justify-between gap-2">
+          <div className="px-5 py-3.5 border-t border-border flex flex-col sm:flex-row
+                          items-center justify-between gap-2 bg-surface/40">
             <span className="text-xs text-text-muted">
               {records.length === 0
                 ? 'Sin resultados'
-                : `Mostrando ${rangeStart}–${rangeEnd} de ${records.length} resultado${records.length !== 1 ? 's' : ''}`}
+                : `${rangeStart}–${rangeEnd} de ${records.length} resultado${records.length !== 1 ? 's' : ''}`}
             </span>
             {totalPages > 1 && (
               <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage((p) => p - 1)}
-                  disabled={page === 1}
-                  className="px-2.5 py-1 text-xs rounded-lg border border-border
-                             text-text-muted hover:bg-surface disabled:opacity-40
-                             disabled:cursor-not-allowed transition-colors"
-                >
+                <button onClick={() => setPage((p) => p - 1)} disabled={page === 1}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-muted
+                             hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                   ← Anterior
                 </button>
                 {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPage(p)}
-                    className={`w-7 h-7 text-xs rounded-lg border transition-colors
+                  <button key={p} onClick={() => setPage(p)}
+                    className={`w-7 h-7 text-xs rounded-lg transition-colors
                       ${p === page
-                        ? 'bg-primary text-white border-primary font-semibold'
-                        : 'border-border text-text-muted hover:bg-surface'}`}
-                  >
+                        ? 'bg-primary text-white font-bold'
+                        : 'border border-border text-text-muted hover:bg-white'}`}>
                     {p}
                   </button>
                 ))}
-                <button
-                  onClick={() => setPage((p) => p + 1)}
-                  disabled={page === totalPages}
-                  className="px-2.5 py-1 text-xs rounded-lg border border-border
-                             text-text-muted hover:bg-surface disabled:opacity-40
-                             disabled:cursor-not-allowed transition-colors"
-                >
+                <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}
+                  className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-muted
+                             hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
                   Siguiente →
                 </button>
               </div>

@@ -130,7 +130,7 @@ export default function AdminLayout({ children }) {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
 
         {/* Header desktop */}
-        <header className="hidden lg:flex flex-shrink-0 bg-white border-b border-border
+        <header className="hidden lg:flex flex-shrink-0 bg-white border-b border-border shadow-sm
                            px-6 h-16 items-center justify-between z-10">
           <p className="text-sm font-semibold text-text-muted tracking-wide uppercase">
             Panel Administrativo

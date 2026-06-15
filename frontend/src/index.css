@@ -77,10 +77,11 @@
   }
 
   .sidebar-item-active {
-    @apply sidebar-item bg-white/15 text-white;
+    @apply sidebar-item bg-white/20 text-white font-semibold;
+    box-shadow: inset 3px 0 0 white;
   }
 
   .sidebar-item-inactive {
-    @apply sidebar-item text-white/70 hover:bg-white/10 hover:text-white;
+    @apply sidebar-item text-white/65 hover:bg-white/10 hover:text-white;
   }
 }
