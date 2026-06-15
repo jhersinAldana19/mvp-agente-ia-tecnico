@@ -136,15 +136,15 @@ export default function AdminUsersPage() {
       )}
 
       {!isLoading && users.length > 0 && (
-        <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="border border-border overflow-hidden">
           {/* Desktop table */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b-2 border-border">
+                <tr className="bg-surface border-b-2 border-border">
                   {['Nombre', 'Correo', 'Rol', 'Miembro desde', 'Acciones'].map((h) => (
                     <th key={h}
-                      className="text-left py-4 px-5 text-sm font-bold text-text-main">
+                      className="text-left py-3.5 px-5 text-sm font-bold text-text-main">
                       {h}
                     </th>
                   ))}

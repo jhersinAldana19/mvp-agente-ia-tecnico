@@ -78,7 +78,6 @@
 
   .sidebar-item-active {
     @apply sidebar-item bg-white/20 text-white font-semibold;
-    box-shadow: inset 3px 0 0 white;
   }
 
   .sidebar-item-inactive {

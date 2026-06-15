@@ -229,15 +229,15 @@ export default function AdminHistoryPage() {
       )}
 
       {!isLoading && records.length > 0 && (
-        <div className="bg-white rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="border border-border overflow-hidden">
           {/* Desktop */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b-2 border-border">
+                <tr className="bg-surface border-b-2 border-border">
                   {['Usuario', 'Correo', 'Pregunta', 'Fecha', ''].map((h) => (
                     <th key={h}
-                      className="text-left py-4 px-5 text-sm font-bold text-text-main">
+                      className="text-left py-3.5 px-5 text-sm font-bold text-text-main">
                       {h}
                     </th>
                   ))}
@@ -318,7 +318,7 @@ export default function AdminHistoryPage() {
 
           {/* Paginación */}
           <div className="px-5 py-3.5 border-t border-border flex flex-col sm:flex-row
-                          items-center justify-between gap-2 bg-surface/40">
+                          items-center justify-between gap-2 bg-surface">
             <span className="text-xs text-text-muted">
               {records.length === 0
                 ? 'Sin resultados'
