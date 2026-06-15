@@ -141,19 +141,20 @@ class SupabaseService:
     def get_global_history(
         self, search: str = "", date_from: str = "", date_to: str = ""
     ) -> List[dict]:
+        # Date filters applied at DB level; text search applied in Python after
+        # joining profiles (so it can match name, email and content).
         query = (
             self._db.table("chat_messages")
             .select("id, session_id, content, created_at, user_id")
             .eq("role", "user")
             .order("created_at", desc=True)
-            .limit(200)
+            .limit(500)
         )
-        if search:
-            query = query.ilike("content", f"%{search}%")
         if date_from:
             query = query.gte("created_at", date_from)
         if date_to:
-            query = query.lte("created_at", date_to)
+            # Include the full end day (timestamps go up to 23:59:59).
+            query = query.lte("created_at", f"{date_to}T23:59:59")
         messages = query.execute().data or []
 
         if not messages:
@@ -162,18 +163,32 @@ class SupabaseService:
         # Fetch profiles separately — chat_messages.user_id references auth.users,
         # not public.profiles, so PostgREST can't resolve the join automatically.
         user_ids = list({m["user_id"] for m in messages})
-        profiles_result = (
-            self._db.table("profiles")
-            .select("id, full_name, email, avatar_url")
-            .in_("id", user_ids)
-            .execute()
-        )
-        profiles_by_id = {p["id"]: p for p in (profiles_result.data or [])}
+        profiles_by_id = {
+            p["id"]: p
+            for p in (
+                self._db.table("profiles")
+                .select("id, full_name, email, avatar_url")
+                .in_("id", user_ids)
+                .execute()
+                .data or []
+            )
+        }
 
-        return [
-            {**m, "profiles": profiles_by_id.get(m["user_id"])}
-            for m in messages
-        ]
+        needle = search.strip().lower() if search else ""
+        result = []
+        for m in messages:
+            profile = profiles_by_id.get(m["user_id"])
+            if needle:
+                name  = (profile or {}).get("full_name", "") or ""
+                email = (profile or {}).get("email", "") or ""
+                if not (
+                    needle in m["content"].lower()
+                    or needle in name.lower()
+                    or needle in email.lower()
+                ):
+                    continue
+            result.append({**m, "profiles": profile})
+        return result
 
 
     def get_session_messages_admin(self, session_id: str) -> List[dict]:
