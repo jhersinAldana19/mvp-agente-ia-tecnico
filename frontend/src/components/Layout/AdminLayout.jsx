@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import logoTecport from '../../assets/branding/logo-tecport.png'
+import logoTecport from '../../assets/branding/logo-tecport-blanco.webp'
 
 const NAV_ITEMS = [
   {
@@ -34,7 +34,7 @@ function Sidebar({ onClose, onSignOut }) {
     <aside className="w-60 bg-primary flex flex-col h-full">
       {/* Logo */}
       <div className="p-5 border-b border-white/10 flex-shrink-0">
-        <img src={logoTecport} alt="TECPORT AI" className="h-10 w-auto brightness-0 invert" />
+        <img src={logoTecport} alt="TECPORT AI" className="h-10 w-auto" />
         <p className="text-white/60 text-xs mt-2">Panel administrativo</p>
       </div>
 
@@ -131,15 +131,19 @@ export default function AdminLayout({ children }) {
 
         {/* Header desktop */}
         <header className="hidden lg:flex flex-shrink-0 bg-white border-b border-border
-                           px-6 h-14 items-center justify-between z-10">
-          <p className="text-sm font-semibold text-text-main tracking-wide">
-            Panel Administrativo · TECPORT
+                           px-6 h-16 items-center justify-between z-10">
+          <p className="text-sm font-semibold text-text-muted tracking-wide uppercase">
+            Panel Administrativo
           </p>
           <div className="flex items-center gap-3">
-            <AdminAvatar profile={profile} />
-            <span className="text-sm font-medium text-text-main max-w-[160px] truncate">
-              {profile?.full_name || ''}
-            </span>
+            <Link to="/admin/profile"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity rounded-full"
+              title="Mi perfil">
+              <AdminAvatar profile={profile} />
+              <span className="text-sm font-medium text-text-main max-w-[160px] truncate">
+                {profile?.full_name || ''}
+              </span>
+            </Link>
             <div className="w-px h-5 bg-border" />
             <button
               onClick={handleSignOut}

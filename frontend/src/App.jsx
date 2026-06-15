@@ -2,6 +2,7 @@ import { Navigate, Outlet, Route, Routes } from 'react-router-dom'
 import { useAuth } from './context/AuthContext'
 import AdminHistoryPage from './pages/AdminHistoryPage'
 import AdminUsersPage from './pages/AdminUsersPage'
+import AdminProfilePage from './pages/AdminProfilePage'
 import DocumentsPage from './pages/DocumentsPage'
 import LoginPage from './pages/LoginPage'
 import ProfilePage from './pages/ProfilePage'
@@ -57,6 +58,7 @@ export default function App() {
       <Route element={<ProtectedRoute allowedRole="admin" />}>
         <Route path="/admin/history" element={<AdminHistoryPage />} />
         <Route path="/admin/users" element={<AdminUsersPage />} />
+        <Route path="/admin/profile" element={<AdminProfilePage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />

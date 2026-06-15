@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import AdminLayout from '../components/Layout/AdminLayout'
 import EmptyState from '../components/UI/EmptyState'
@@ -146,7 +146,7 @@ export default function AdminHistoryPage() {
   const [modalRecord, setModalRecord] = useState(null)
   const [page, setPage]         = useState(1)
 
-  const fetchHistory = async () => {
+  const fetchHistory = useCallback(async () => {
     setIsLoading(true)
     setError('')
     try {
@@ -161,11 +161,11 @@ export default function AdminHistoryPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [search, dateFrom, dateTo])
 
-  useEffect(() => { fetchHistory() }, [])
+  useEffect(() => { fetchHistory() }, [])   // carga inicial sin filtros
 
-  const handleFilter  = (e) => { e.preventDefault(); fetchHistory() }
+  const handleFilter = (e) => { e.preventDefault(); fetchHistory() }
   const totalPages    = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
   const pageRecords   = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
   const rangeStart    = records.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
