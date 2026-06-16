@@ -16,6 +16,7 @@ _RAG_TOP_K_COMERCIAL  = 4   # slots para brochures en cada consulta
 _NS_TECNICO           = "trs4531"
 _NS_COMERCIAL         = "trs4531-comercial"
 _SPECS_DOC            = "cap9-especificaciones-trs4531 (1).pdf"
+_LUBRICACION_DOC      = "cap7-lubricacion-trs4531-v1 (1).pdf"
 
 # Términos coloquiales → equivalentes técnicos usados en los documentos.
 _SYNONYM_MAP = {
@@ -38,14 +39,29 @@ _SPEC_WORDS = frozenset({
     "presion", "capacidad", "potencia", "peso", "dimensión", "dimension",
 })
 
-# Nombre exacto del documento de especificaciones en Pinecone
-_SPECS_DOC = "cap9-especificaciones-trs4531 (1).pdf"
+# Palabras que indican pregunta de lubricación/aceites.
+# Cuando aparecen, se fuerza recuperación adicional desde cap7 (tabla de lubricantes).
+_LUBRICACION_WORDS = frozenset({
+    "aceite", "lubricante", "lubricacion", "lubricación",
+    "grasa", "hidráulico", "hidraulico",
+    "dexron", "iso vg", "mil-l", "acea", "sae 10",
+    "cambio aceite", "nivel aceite", "capacidad litros",
+    "frenos aceite", "transmision aceite", "transmisión aceite",
+    "mantenimiento aceite", "lubrica", "engrasa",
+    "nota 5", "nota 8", "nota 9", "nota 10", "nota 13",
+})
 
 
 def _is_spec_question(question: str) -> bool:
     """True si la pregunta es sobre especificaciones técnicas del equipo."""
     q = question.lower()
     return sum(1 for w in _SPEC_WORDS if w in q) >= 2
+
+
+def _is_lubricacion_question(question: str) -> bool:
+    """True si la pregunta es sobre aceites, lubricantes o mantenimiento de fluidos."""
+    q = question.lower()
+    return any(w in q for w in _LUBRICACION_WORDS)
 
 
 def _synonym_query(question: str) -> str | None:
@@ -88,7 +104,17 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
             alt_emb, top_k=_RAG_TOP_K // 2, namespace=_NS_TECNICO,
         ))
 
-    # ── 3. Refuerzo cap9 para preguntas de especificaciones ──────────────────
+    # ── 3. Refuerzo cap7 para preguntas de lubricación/aceites ───────────────
+    # Garantiza que las tablas de lubricantes y sus notas lleguen al contexto.
+    if _is_lubricacion_question(question):
+        _merge(await pinecone.search(
+            embedding,
+            top_k=8,
+            namespace=_NS_TECNICO,
+            filter={"document_name": {"$eq": _LUBRICACION_DOC}},
+        ))
+
+    # ── 4. Refuerzo cap9 para preguntas de especificaciones ──────────────────
     if _is_spec_question(question):
         _merge(await pinecone.search(
             embedding,
@@ -97,7 +123,7 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
             filter={"document_name": {"$eq": _SPECS_DOC}},
         ))
 
-    # ── 4. Búsqueda en brochures comerciales (siempre) ───────────────────────
+    # ── 5. Búsqueda en brochures comerciales (siempre) ───────────────────────
     _merge(await pinecone.search(
         embedding, top_k=_RAG_TOP_K_COMERCIAL, namespace=_NS_COMERCIAL,
     ))

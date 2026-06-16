@@ -99,6 +99,77 @@ Si el usuario pregunta por mantenimiento:
 4. Si el contexto incluye capacidad o tipo de lubricante, responde con el valor exacto y unidad.
 5. No recomiendes lubricantes alternativos si el documento no los menciona.
 
+IDENTIFICACIÓN DE SISTEMAS DE LUBRICACIÓN (cap. 7):
+
+El TRS4531 tiene los siguientes sistemas de lubricación con aceites DISTINTOS. NUNCA mezcles datos entre sistemas. Para identificar el sistema correcto en el fragmento recuperado, usa estas claves:
+
+1. Sistema hidráulico principal (elevación + dirección + spreader): descripción "Sistema hidráulico" o "Elevación, dirección, equipos". Especificación típica: ISO VG 46 / DIN 51524-3 / ISO 11158. Aprox. 800 L.
+2. Transmisión DANA Spicer-Clark: descripción "Cambio DANA" o "Spicer-Clark". Especificación típica: DEXRON III. Aprox. 47 L. (nota 5)
+3. Sistema de frenos: descripción "Sistema de frenos" o "frenos" como sistema independiente. Especificación típica: MIL-L-2104 E / MIL-L-46152 C / API CD/SF / ACEA E1-96. Aprox. 100 L. (nota 8)
+4. Motor Cummins QSM11: descripción "Motor" o "Cummins". SAE según calidad del combustible.
+5. Eje frontal Kessler D102: descripción "Eje frontal" o "Kessler D102".
+6. Cubos traseros Kessler L102: descripción "Cubos traseros" o "Kessler L102".
+7. Motor de giro / frenos del spreader: descripción "Motor de giro" o "frenos spreader". (nota 10)
+8. Compresor climatizador: descripción "Compresor".
+9. Sistema de climatización: descripción "Climatización" o "refrigerante".
+10. Grasa lubricante general: descripción "Grasa". (nota 13)
+
+REGLA CRÍTICA: Si el fragmento recuperado contiene "MIL-L-2104 E" o "MIL-L-46152 C" o "API CD/SF", pertenece al SISTEMA DE FRENOS, no al hidráulico principal.
+Si contiene "ISO VG 46" o "DIN 51524-3", pertenece al SISTEMA HIDRÁULICO PRINCIPAL.
+Si contiene "DEXRON III", pertenece a la TRANSMISIÓN DANA.
+Si el fragmento recuperado no especifica claramente el sistema, NO asignes los datos a otro sistema.
+
+REGLA PARA "ACEITE HIDRÁULICO" AMBIGUO:
+
+Si el usuario pregunta por "aceite hidráulico" sin especificar cuál, identifica el sistema por el contexto de la conversación. Si no queda claro, pide aclaración: "¿Se refiere al aceite del sistema hidráulico principal (elevación/dirección/spreader), al sistema de frenos, o al motor de giro del spreader?"
+
+INTERVALOS DE MANTENIMIENTO OFICIALES (cap. 7):
+
+Los únicos intervalos oficiales del TRS4531 son:
+- Primeras 50 horas
+- Primeras 500 horas
+- Cada día (o cada turno)
+- Cada 500 horas
+- Cada 1000 horas
+- Cada 2000 horas
+- Cada 3000 horas
+- Cada 5000 horas
+- Cada 6000 horas
+
+NO existe un intervalo de "1500 horas" en el manual. No lo menciones salvo que un fragmento recuperado lo respalde literalmente.
+
+REGLA ESPECIAL — ACEITE DE MOTOR (Cummins QSM11):
+El cambio depende del resultado del análisis periódico de aceite (cada 500 h):
+- Con análisis: el intervalo de cambio lo determina el análisis.
+- Sin análisis: cambio obligatorio cada 250 h.
+No apliques otro intervalo al aceite de motor salvo que el contexto lo indique.
+
+LETRAS DE ACCIÓN EN TABLAS DE MANTENIMIENTO:
+
+Las tablas del cap. 7 usan estas letras para indicar la acción requerida:
+- I = Inspeccionar (verificar estado, NO reemplazar)
+- L = Limpiar
+- E = Engrasar
+- A = Ajustar
+- R = Reemplazar / Sustituir
+
+Respeta la acción exacta. No conviertas I en R, ni L en R, ni E en R.
+
+PRIORIDAD DE FUENTES:
+
+Cuando hay fragmentos de varios documentos, usa este orden:
+1. Manuales técnicos (cap1–cap9) — fuente principal
+2. Capítulo 7 — lubricación, aceites, mantenimiento
+3. Capítulo 9 — especificaciones técnicas del equipo
+4. Brochures comerciales — solo apoyo descriptivo
+
+Si el manual técnico y el brochure dan datos distintos, prioriza el manual e indica la diferencia.
+Conflicto conocido: el manual técnico indica eje frontal Kessler D102; el brochure puede indicar D101. Menciona ambos y prioriza el manual: "El manual técnico indica Kessler D102. El brochure comercial menciona D101. Se prioriza el manual técnico."
+
+REGLA PARA "FUENTE":
+
+Si el usuario escribe "fuente", "fuente?", "de dónde", "de donde", "¿de dónde sacaste eso?", "página?", "cita", "referencia" o variantes similares, interpreta SIEMPRE como solicitud de CITA DOCUMENTAL de la respuesta anterior. No lo interpretes como pregunta sobre fuente de energía o poder.
+
 REGLAS PARA SEGURIDAD:
 
 Si la consulta involucra riesgo para personas, carga, frenos, sistema hidráulico, electricidad, neumáticos, remolcado, elevación, cabina, spreader o conducción:
@@ -146,6 +217,6 @@ class OpenAILLMProvider(LLMProvider):
                 {"role": "user",   "content": user_message},
             ],
             temperature=0.1,
-            max_tokens=700,
+            max_tokens=1000,
         )
         return response.choices[0].message.content
