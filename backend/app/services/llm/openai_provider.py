@@ -99,57 +99,9 @@ Si el usuario pregunta por mantenimiento:
 4. Si el contexto incluye capacidad o tipo de lubricante, responde con el valor exacto y unidad.
 5. No recomiendes lubricantes alternativos si el documento no los menciona.
 
-TABLA OFICIAL DE LUBRICANTES — TRS4531 (cap. 7, pág. 7.2):
+DATOS ESTRUCTURADOS (prioridad máxima):
 
-Esta tabla contiene los valores EXACTOS del manual. Úsala como fuente de verdad para corregir cualquier confusión en los fragmentos recuperados. Si el contexto RAG parece contradecir esta tabla para los sistemas hidráulico, frenos o transmisión, prevalece esta tabla.
-
-┌─────────────────────────────────────────┬──────────┬────────────────────────────────────────────────────┬───────────┐
-│ Sistema                                 │ Capac.   │ Especificación / Norma                             │ Nota      │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Hidráulico principal                    │ 800 L    │ ISO VG 46 / DIN 51524-3 / ISO 11158               │ nota 9    │
-│ (elevación + dirección + spreader)      │          │                                                    │           │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Sistema de frenos                       │ 100 L    │ MIL-L-2104 E / MIL-L-46152 C / API CD/SF /       │ nota 8    │
-│                                         │          │ ACEA E1-96 / SAE 10W/20                            │           │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Transmisión DANA Spicer-Clark           │ ~47 L    │ DEXRON III                                         │ nota 5    │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Motor Cummins QSM11                     │ ver ctx  │ SAE según calidad combustible                      │ —         │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Eje frontal Kessler D102                │ ver ctx  │ ver contexto                                       │ —         │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Cubos traseros Kessler L102             │ ver ctx  │ ver contexto                                       │ —         │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Motor de giro / frenos spreader         │ ver ctx  │ ver contexto                                       │ nota 10   │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Compresor climatizador                  │ ver ctx  │ ver contexto                                       │ —         │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Sistema de climatización                │ ver ctx  │ ver contexto                                       │ —         │
-├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
-│ Grasa lubricante general                │ ver ctx  │ ver contexto                                       │ nota 13   │
-└─────────────────────────────────────────┴──────────┴────────────────────────────────────────────────────┴───────────┘
-
-REGLAS ABSOLUTAS PARA LUBRICANTES (no negociables):
-
-A) SISTEMA HIDRÁULICO PRINCIPAL — palabras clave: "hidráulico", "funciones hidráulicas", "elevación", "dirección", "spreader" (en contexto de aceite):
-   → Especificación CORRECTA: ISO VG 46 / DIN 51524-3 / ISO 11158 / 800 L
-   → MIL-L-2104 E y MIL-L-46152 C NUNCA corresponden al sistema hidráulico principal. Si el fragmento recuperado incluye estas especificaciones junto a la palabra "hidráulico", el chunking del PDF mezcló dos filas diferentes. Ignora esas especificaciones para el sistema hidráulico.
-
-B) SISTEMA DE FRENOS — palabras clave: "frenos", "sistema de frenos", "aceite de frenos":
-   → Especificación CORRECTA: MIL-L-2104 E / MIL-L-46152 C / API CD/SF / ACEA E1-96 / SAE 10W/20 / 100 L
-   → ISO VG 46 NUNCA corresponde al sistema de frenos.
-
-C) TRANSMISIÓN DANA — palabras clave: "transmisión", "DANA", "Spicer-Clark", "cambio":
-   → Especificación CORRECTA: DEXRON III / ~47 L
-
-D) Si en UN MISMO fragmento recuperado aparecen especificaciones de dos sistemas distintos (p. ej., "ISO VG 46" y "MIL-L-2104 E" juntos), significa que el fragmento contiene dos filas de tabla distintas. Identifica cuál corresponde al sistema que el usuario preguntó y usa SOLO esa fila.
-
-REGLA PARA "ACEITE HIDRÁULICO" AMBIGUO:
-
-Si el usuario pregunta por "aceite hidráulico" sin especificar cuál sistema:
-- Si menciona "elevación", "dirección" o "spreader" → hidráulico principal (ISO VG 46, 800 L)
-- Si menciona "frenos" → sistema de frenos (MIL-L-2104 E, 100 L)
-- Si no queda claro → pide aclaración: "¿Se refiere al sistema hidráulico principal (elevación/dirección/spreader) o al sistema de frenos?"
+Si el mensaje del usuario contiene un bloque "[DATOS ESTRUCTURADOS — ...]", usa esos valores como fuente de verdad con prioridad sobre cualquier fragmento RAG. No contradigas ni ignores esos datos. Cita su documento y página como fuente principal.
 
 INTERVALOS DE MANTENIMIENTO OFICIALES (cap. 7):
 
@@ -233,10 +185,10 @@ class OpenAILLMProvider(LLMProvider):
         if not sources:
             return _NO_SOURCES_RESPONSE
 
-        user_message = (
-            f"Consulta del técnico: {question}\n\n"
-            f"Fragmentos de documentación disponibles:\n\n{_build_context(sources)}"
-        )
+        user_message = f"Consulta del técnico: {question}\n\n"
+        if context:
+            user_message += f"{context}\n\n"
+        user_message += f"Fragmentos de documentación disponibles:\n\n{_build_context(sources)}"
 
         response = await self._client.chat.completions.create(
             model=settings.openai_chat_model,

@@ -144,11 +144,14 @@ async def send_message(
     if settings.llm_provider == "mock":
         from app.services.llm.mock_provider import MOCK_SOURCES
         sources = MOCK_SOURCES
-        context = ""
+        structured = ""
     else:
-        sources, context = await _retrieve_sources(payload.question)
+        from app.services.lubricantes_service import buscar_sistema, formatear_contexto
+        sistema = buscar_sistema(payload.question)
+        structured = formatear_contexto(sistema) if sistema else ""
+        sources, _ = await _retrieve_sources(payload.question)
 
-    answer = await llm.generate_response(payload.question, context, sources)
+    answer = await llm.generate_response(payload.question, structured, sources)
 
     session_id = payload.session_id or db.create_session(user_id, payload.question[:80])
     db.save_message(session_id, user_id, "user", payload.question)
