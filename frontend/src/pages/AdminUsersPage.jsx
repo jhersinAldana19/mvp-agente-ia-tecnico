@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
         <>
           {/* Filtro */}
           <div className="card p-5 mb-5">
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex gap-3">
               <InputText
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -157,10 +157,11 @@ export default function AdminUsersPage() {
                   borderColor: '#003558',
                   color: '#003558',
                   height: '42px',
-                  paddingLeft: '16px',
-                  paddingRight: '16px',
+                  paddingLeft: '14px',
+                  paddingRight: '14px',
                   fontSize: '14px',
                   whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               />
             </div>
@@ -171,11 +172,13 @@ export default function AdminUsersPage() {
           paginator
           rows={10}
           rowsPerPageOptions={[10, 25, 50]}
-          paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+          paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
           currentPageReportTemplate="{first}–{last} de {totalRecords}"
           stripedRows
           emptyMessage="Sin usuarios que coincidan con la búsqueda"
           size="normal"
+          responsiveLayout="stack"
+          breakpoint="767px"
           className="text-sm"
           style={{ fontSize: '14px' }}
         >

@@ -146,23 +146,28 @@ export default function AdminHistoryPage() {
 
       {/* Filtros */}
       <div className="card p-5 mb-5">
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Búsqueda — ocupa todo el ancho */}
+        <div className="mb-3">
           <InputText
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && fetchHistory()}
             placeholder="Buscar por usuario, correo o pregunta..."
-            className="flex-1"
+            className="w-full"
             style={{ height: '42px', fontSize: '14px' }}
           />
+        </div>
+        {/* Fechas + botones — se envuelven en móvil */}
+        <div className="flex flex-wrap gap-3">
           <Calendar
             value={dateFrom}
             onChange={(e) => setDateFrom(e.value)}
             placeholder="Desde"
             dateFormat="dd/mm/yy"
             showIcon
+            className="flex-1"
+            style={{ minWidth: '140px' }}
             inputStyle={{ height: '42px', fontSize: '14px' }}
-            style={{ width: '170px' }}
           />
           <Calendar
             value={dateTo}
@@ -170,41 +175,44 @@ export default function AdminHistoryPage() {
             placeholder="Hasta"
             dateFormat="dd/mm/yy"
             showIcon
+            className="flex-1"
+            style={{ minWidth: '140px' }}
             inputStyle={{ height: '42px', fontSize: '14px' }}
-            style={{ width: '170px' }}
           />
-          <Button
-            label="Filtrar"
-            icon="pi pi-search"
-            onClick={fetchHistory}
-            loading={isLoading}
-            style={{
-              backgroundColor: '#003558',
-              borderColor: '#003558',
-              color: '#ffffff',
-              height: '42px',
-              paddingLeft: '20px',
-              paddingRight: '20px',
-              fontSize: '14px',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}
-          />
-          <Button
-            label="Limpiar"
-            icon="pi pi-times"
-            onClick={handleClear}
-            outlined
-            style={{
-              borderColor: '#003558',
-              color: '#003558',
-              height: '42px',
-              paddingLeft: '16px',
-              paddingRight: '16px',
-              fontSize: '14px',
-              whiteSpace: 'nowrap',
-            }}
-          />
+          <div className="flex gap-2 flex-shrink-0">
+            <Button
+              label="Filtrar"
+              icon="pi pi-search"
+              onClick={fetchHistory}
+              loading={isLoading}
+              style={{
+                backgroundColor: '#003558',
+                borderColor: '#003558',
+                color: '#ffffff',
+                height: '42px',
+                paddingLeft: '18px',
+                paddingRight: '18px',
+                fontSize: '14px',
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+              }}
+            />
+            <Button
+              label="Limpiar"
+              icon="pi pi-times"
+              onClick={handleClear}
+              outlined
+              style={{
+                borderColor: '#003558',
+                color: '#003558',
+                height: '42px',
+                paddingLeft: '14px',
+                paddingRight: '14px',
+                fontSize: '14px',
+                whiteSpace: 'nowrap',
+              }}
+            />
+          </div>
         </div>
       </div>
 
@@ -220,12 +228,14 @@ export default function AdminHistoryPage() {
         paginator
         rows={10}
         rowsPerPageOptions={[10, 25, 50]}
-        paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+        paginatorTemplate="FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink RowsPerPageDropdown"
         currentPageReportTemplate="{first}–{last} de {totalRecords}"
         stripedRows
         emptyMessage={fetched ? 'Sin resultados' : 'Usa el filtro para buscar conversaciones.'}
         loading={isLoading}
         size="normal"
+        responsiveLayout="stack"
+        breakpoint="767px"
         className="text-sm"
         style={{ fontSize: '14px' }}
       >
@@ -233,7 +243,7 @@ export default function AdminHistoryPage() {
         <Column header="Correo"   body={emailTemplate}   style={{ minWidth: '190px' }} />
         <Column header="Pregunta" body={contentTemplate} style={{ minWidth: '260px' }} />
         <Column header="Fecha"    body={dateTemplate}    style={{ minWidth: '160px' }} sortable field="created_at" />
-        <Column body={actionTemplate} style={{ width: '110px' }} />
+        <Column header="Acción"   body={actionTemplate}  style={{ width: '110px' }} />
       </DataTable>
 
       {/* Modal conversación */}
