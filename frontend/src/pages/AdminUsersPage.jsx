@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Avatar } from 'primereact/avatar'
+import { Button } from 'primereact/button'
 import { Column } from 'primereact/column'
 import { DataTable } from 'primereact/datatable'
 import { Dropdown } from 'primereact/dropdown'
-import { Tag } from 'primereact/tag'
+import { InputText } from 'primereact/inputtext'
 import { ProgressSpinner } from 'primereact/progressspinner'
+import { Tag } from 'primereact/tag'
 import AdminLayout from '../components/Layout/AdminLayout'
 import EmptyState from '../components/UI/EmptyState'
 import api from '../services/api'
@@ -26,10 +28,20 @@ function formatDate(isoString) {
 }
 
 export default function AdminUsersPage() {
-  const [users, setUsers]       = useState([])
+  const [users, setUsers]         = useState([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError]       = useState('')
-  const [saving, setSaving]     = useState({})
+  const [error, setError]         = useState('')
+  const [saving, setSaving]       = useState({})
+  const [search, setSearch]       = useState('')
+
+  const filteredUsers = useMemo(() => {
+    const needle = search.trim().toLowerCase()
+    if (!needle) return users
+    return users.filter((u) =>
+      (u.full_name || '').toLowerCase().includes(needle) ||
+      (u.email || '').toLowerCase().includes(needle)
+    )
+  }, [users, search])
 
   useEffect(() => {
     api.get('/admin/users')
@@ -124,10 +136,45 @@ export default function AdminUsersPage() {
       )}
 
       {!isLoading && users.length > 0 && (
+        <>
+          {/* Filtro */}
+          <div className="card p-5 mb-5">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <InputText
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Buscar por nombre o correo..."
+                className="flex-1"
+                style={{ height: '42px', fontSize: '14px' }}
+              />
+              <Button
+                label="Limpiar"
+                icon="pi pi-times"
+                onClick={() => setSearch('')}
+                outlined
+                disabled={!search}
+                style={{
+                  borderColor: '#003558',
+                  color: '#003558',
+                  height: '42px',
+                  paddingLeft: '16px',
+                  paddingRight: '16px',
+                  fontSize: '14px',
+                  whiteSpace: 'nowrap',
+                }}
+              />
+            </div>
+          </div>
+
         <DataTable
-          value={users}
+          value={filteredUsers}
+          paginator
+          rows={10}
+          rowsPerPageOptions={[10, 25, 50]}
+          paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+          currentPageReportTemplate="{first}–{last} de {totalRecords}"
           stripedRows
-          emptyMessage="Sin usuarios"
+          emptyMessage="Sin usuarios que coincidan con la búsqueda"
           size="normal"
           className="text-sm"
           style={{ fontSize: '14px' }}
@@ -138,6 +185,7 @@ export default function AdminUsersPage() {
           <Column header="Miembro desde" body={dateTemplate}   style={{ minWidth: '130px' }} sortable field="created_at" />
           <Column header="Cambiar rol"   body={actionTemplate} style={{ minWidth: '180px' }} />
         </DataTable>
+        </>
       )}
     </AdminLayout>
   )

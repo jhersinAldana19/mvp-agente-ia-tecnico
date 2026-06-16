@@ -58,17 +58,11 @@ export default function AdminHistoryPage() {
 
   const toISO = (d) => (d instanceof Date ? d.toISOString().split('T')[0] : '')
 
-  const fetchHistory = useCallback(async () => {
+  const doFetch = async (params) => {
     setIsLoading(true)
     setError('')
     try {
-      const { data } = await api.get('/admin/history', {
-        params: {
-          search,
-          date_from: toISO(dateFrom),
-          date_to:   toISO(dateTo),
-        },
-      })
+      const { data } = await api.get('/admin/history', { params })
       setRecords(data)
       setFetched(true)
     } catch (err) {
@@ -76,9 +70,21 @@ export default function AdminHistoryPage() {
     } finally {
       setIsLoading(false)
     }
-  }, [search, dateFrom, dateTo])
+  }
 
-  useEffect(() => { fetchHistory() }, [])
+  const fetchHistory = useCallback(
+    () => doFetch({ search, date_from: toISO(dateFrom), date_to: toISO(dateTo) }),
+    [search, dateFrom, dateTo]
+  )
+
+  const handleClear = () => {
+    setSearch('')
+    setDateFrom(null)
+    setDateTo(null)
+    doFetch({})
+  }
+
+  useEffect(() => { doFetch({}) }, [])
 
   const openModal = async (record) => {
     setModalRecord(record)
@@ -175,11 +181,27 @@ export default function AdminHistoryPage() {
             style={{
               backgroundColor: '#003558',
               borderColor: '#003558',
+              color: '#ffffff',
               height: '42px',
               paddingLeft: '20px',
               paddingRight: '20px',
               fontSize: '14px',
               fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          />
+          <Button
+            label="Limpiar"
+            icon="pi pi-times"
+            onClick={handleClear}
+            outlined
+            style={{
+              borderColor: '#003558',
+              color: '#003558',
+              height: '42px',
+              paddingLeft: '16px',
+              paddingRight: '16px',
+              fontSize: '14px',
               whiteSpace: 'nowrap',
             }}
           />
