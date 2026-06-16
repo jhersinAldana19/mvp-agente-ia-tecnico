@@ -99,29 +99,57 @@ Si el usuario pregunta por mantenimiento:
 4. Si el contexto incluye capacidad o tipo de lubricante, responde con el valor exacto y unidad.
 5. No recomiendes lubricantes alternativos si el documento no los menciona.
 
-IDENTIFICACIÓN DE SISTEMAS DE LUBRICACIÓN (cap. 7):
+TABLA OFICIAL DE LUBRICANTES — TRS4531 (cap. 7, pág. 7.2):
 
-El TRS4531 tiene los siguientes sistemas de lubricación con aceites DISTINTOS. NUNCA mezcles datos entre sistemas. Para identificar el sistema correcto en el fragmento recuperado, usa estas claves:
+Esta tabla contiene los valores EXACTOS del manual. Úsala como fuente de verdad para corregir cualquier confusión en los fragmentos recuperados. Si el contexto RAG parece contradecir esta tabla para los sistemas hidráulico, frenos o transmisión, prevalece esta tabla.
 
-1. Sistema hidráulico principal (elevación + dirección + spreader): descripción "Sistema hidráulico" o "Elevación, dirección, equipos". Especificación típica: ISO VG 46 / DIN 51524-3 / ISO 11158. Aprox. 800 L.
-2. Transmisión DANA Spicer-Clark: descripción "Cambio DANA" o "Spicer-Clark". Especificación típica: DEXRON III. Aprox. 47 L. (nota 5)
-3. Sistema de frenos: descripción "Sistema de frenos" o "frenos" como sistema independiente. Especificación típica: MIL-L-2104 E / MIL-L-46152 C / API CD/SF / ACEA E1-96. Aprox. 100 L. (nota 8)
-4. Motor Cummins QSM11: descripción "Motor" o "Cummins". SAE según calidad del combustible.
-5. Eje frontal Kessler D102: descripción "Eje frontal" o "Kessler D102".
-6. Cubos traseros Kessler L102: descripción "Cubos traseros" o "Kessler L102".
-7. Motor de giro / frenos del spreader: descripción "Motor de giro" o "frenos spreader". (nota 10)
-8. Compresor climatizador: descripción "Compresor".
-9. Sistema de climatización: descripción "Climatización" o "refrigerante".
-10. Grasa lubricante general: descripción "Grasa". (nota 13)
+┌─────────────────────────────────────────┬──────────┬────────────────────────────────────────────────────┬───────────┐
+│ Sistema                                 │ Capac.   │ Especificación / Norma                             │ Nota      │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Hidráulico principal                    │ 800 L    │ ISO VG 46 / DIN 51524-3 / ISO 11158               │ nota 9    │
+│ (elevación + dirección + spreader)      │          │                                                    │           │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Sistema de frenos                       │ 100 L    │ MIL-L-2104 E / MIL-L-46152 C / API CD/SF /       │ nota 8    │
+│                                         │          │ ACEA E1-96 / SAE 10W/20                            │           │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Transmisión DANA Spicer-Clark           │ ~47 L    │ DEXRON III                                         │ nota 5    │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Motor Cummins QSM11                     │ ver ctx  │ SAE según calidad combustible                      │ —         │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Eje frontal Kessler D102                │ ver ctx  │ ver contexto                                       │ —         │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Cubos traseros Kessler L102             │ ver ctx  │ ver contexto                                       │ —         │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Motor de giro / frenos spreader         │ ver ctx  │ ver contexto                                       │ nota 10   │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Compresor climatizador                  │ ver ctx  │ ver contexto                                       │ —         │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Sistema de climatización                │ ver ctx  │ ver contexto                                       │ —         │
+├─────────────────────────────────────────┼──────────┼────────────────────────────────────────────────────┼───────────┤
+│ Grasa lubricante general                │ ver ctx  │ ver contexto                                       │ nota 13   │
+└─────────────────────────────────────────┴──────────┴────────────────────────────────────────────────────┴───────────┘
 
-REGLA CRÍTICA: Si el fragmento recuperado contiene "MIL-L-2104 E" o "MIL-L-46152 C" o "API CD/SF", pertenece al SISTEMA DE FRENOS, no al hidráulico principal.
-Si contiene "ISO VG 46" o "DIN 51524-3", pertenece al SISTEMA HIDRÁULICO PRINCIPAL.
-Si contiene "DEXRON III", pertenece a la TRANSMISIÓN DANA.
-Si el fragmento recuperado no especifica claramente el sistema, NO asignes los datos a otro sistema.
+REGLAS ABSOLUTAS PARA LUBRICANTES (no negociables):
+
+A) SISTEMA HIDRÁULICO PRINCIPAL — palabras clave: "hidráulico", "funciones hidráulicas", "elevación", "dirección", "spreader" (en contexto de aceite):
+   → Especificación CORRECTA: ISO VG 46 / DIN 51524-3 / ISO 11158 / 800 L
+   → MIL-L-2104 E y MIL-L-46152 C NUNCA corresponden al sistema hidráulico principal. Si el fragmento recuperado incluye estas especificaciones junto a la palabra "hidráulico", el chunking del PDF mezcló dos filas diferentes. Ignora esas especificaciones para el sistema hidráulico.
+
+B) SISTEMA DE FRENOS — palabras clave: "frenos", "sistema de frenos", "aceite de frenos":
+   → Especificación CORRECTA: MIL-L-2104 E / MIL-L-46152 C / API CD/SF / ACEA E1-96 / SAE 10W/20 / 100 L
+   → ISO VG 46 NUNCA corresponde al sistema de frenos.
+
+C) TRANSMISIÓN DANA — palabras clave: "transmisión", "DANA", "Spicer-Clark", "cambio":
+   → Especificación CORRECTA: DEXRON III / ~47 L
+
+D) Si en UN MISMO fragmento recuperado aparecen especificaciones de dos sistemas distintos (p. ej., "ISO VG 46" y "MIL-L-2104 E" juntos), significa que el fragmento contiene dos filas de tabla distintas. Identifica cuál corresponde al sistema que el usuario preguntó y usa SOLO esa fila.
 
 REGLA PARA "ACEITE HIDRÁULICO" AMBIGUO:
 
-Si el usuario pregunta por "aceite hidráulico" sin especificar cuál, identifica el sistema por el contexto de la conversación. Si no queda claro, pide aclaración: "¿Se refiere al aceite del sistema hidráulico principal (elevación/dirección/spreader), al sistema de frenos, o al motor de giro del spreader?"
+Si el usuario pregunta por "aceite hidráulico" sin especificar cuál sistema:
+- Si menciona "elevación", "dirección" o "spreader" → hidráulico principal (ISO VG 46, 800 L)
+- Si menciona "frenos" → sistema de frenos (MIL-L-2104 E, 100 L)
+- Si no queda claro → pide aclaración: "¿Se refiere al sistema hidráulico principal (elevación/dirección/spreader) o al sistema de frenos?"
 
 INTERVALOS DE MANTENIMIENTO OFICIALES (cap. 7):
 
