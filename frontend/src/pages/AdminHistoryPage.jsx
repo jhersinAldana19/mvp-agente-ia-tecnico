@@ -1,7 +1,13 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { Avatar } from 'primereact/avatar'
+import { Button } from 'primereact/button'
+import { Calendar } from 'primereact/calendar'
+import { Column } from 'primereact/column'
+import { DataTable } from 'primereact/datatable'
+import { Dialog } from 'primereact/dialog'
+import { InputText } from 'primereact/inputtext'
 import AdminLayout from '../components/Layout/AdminLayout'
-import EmptyState from '../components/UI/EmptyState'
 import Spinner from '../components/UI/Spinner'
 import api from '../services/api'
 import perfilAgente from '../assets/agente/perfil-agente.webp'
@@ -19,28 +25,8 @@ function formatTime(isoString) {
   })
 }
 
-function truncate(text, max = 80) {
-  return text.length > max ? `${text.slice(0, max)}…` : text
-}
-
-function MiniAvatar({ name, avatarUrl }) {
-  const [broken, setBroken] = useState(false)
-  const initials = name
-    ? name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
-    : '?'
-  return (
-    <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 border border-border">
-      {avatarUrl && !broken ? (
-        <img src={avatarUrl} alt={name} className="w-full h-full object-cover"
-          onError={() => setBroken(true)} />
-      ) : (
-        <div className="w-full h-full bg-primary/10 flex items-center justify-center
-                        text-primary text-xs font-semibold">
-          {initials}
-        </div>
-      )}
-    </div>
-  )
+function truncate(text, max = 90) {
+  return text?.length > max ? `${text.slice(0, max)}…` : (text || '')
 }
 
 const MD = {
@@ -50,131 +36,40 @@ const MD = {
   strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
 }
 
-/* ── Modal de conversación completa ── */
-function UserBubbleAvatar({ avatarUrl, broken, onError }) {
-  if (avatarUrl && !broken) {
-    return (
-      <img src={avatarUrl} alt="Usuario"
-        className="w-7 h-7 rounded-full object-cover border border-border flex-shrink-0"
-        onError={onError} />
-    )
-  }
-  return (
-    <div className="w-7 h-7 rounded-full bg-primary/10 border border-border
-                    flex-shrink-0 flex items-center justify-center">
-      <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-      </svg>
-    </div>
-  )
+function userInitials(name) {
+  if (!name || name === '—') return '?'
+  return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
-function ConversationModal({ record, onClose }) {
-  const [messages, setMessages] = useState([])
-  const [loading, setLoading]   = useState(true)
-  const [error, setError]       = useState('')
-  const [avatarBroken, setAvatarBroken] = useState(false)
-  const avatarUrl = record.profiles?.avatar_url
-
-  useEffect(() => {
-    api.get(`/admin/sessions/${record.session_id}`)
-      .then(({ data }) => setMessages(data))
-      .catch(() => setError('No se pudo cargar la conversación.'))
-      .finally(() => setLoading(false))
-  }, [record.session_id])
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40"
-         onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl max-h-[80vh]
-                      flex flex-col overflow-hidden"
-           onClick={(e) => e.stopPropagation()}>
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border">
-          <div>
-            <p className="font-semibold text-text-main text-sm">
-              {record.profiles?.full_name || '—'}
-            </p>
-            <p className="text-xs text-text-muted">{record.profiles?.email || '—'}</p>
-          </div>
-          <button onClick={onClose}
-            className="text-text-muted hover:text-text-main transition-colors p-1">
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-3 bg-surface/40">
-          {loading && <div className="flex justify-center py-8"><Spinner /></div>}
-          {error   && <p className="text-sm text-red-600 text-center">{error}</p>}
-          {!loading && messages.map((msg) => {
-            const isUser = msg.role === 'user'
-            return (
-              <div key={msg.id}
-                   className={`flex gap-2 items-start ${isUser ? 'flex-row-reverse' : ''}`}>
-                {isUser ? (
-                  <UserBubbleAvatar
-                    avatarUrl={avatarUrl}
-                    broken={avatarBroken}
-                    onError={() => setAvatarBroken(true)}
-                  />
-                ) : (
-                  <img src={perfilAgente} alt="SOFIA"
-                    className="w-7 h-7 rounded-full object-cover border border-border flex-shrink-0" />
-                )}
-                <div className={`max-w-[78%] rounded-xl px-3 py-2 text-xs leading-relaxed
-                                 ${isUser
-                                   ? 'bg-primary text-white rounded-tr-sm'
-                                   : 'bg-white border border-border text-text-main rounded-tl-sm'}`}>
-                  {isUser
-                    ? msg.content
-                    : <ReactMarkdown components={MD}>{msg.content}</ReactMarkdown>}
-                  <p className={`text-[10px] mt-1
-                                 ${isUser ? 'text-white/60 text-right' : 'text-text-muted'}`}>
-                    {formatTime(msg.created_at)}
-                  </p>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="px-5 py-3 border-t border-border bg-white text-xs text-text-muted">
-          {messages.length} mensaje{messages.length !== 1 ? 's' : ''}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const PAGE_SIZE = 10
-
-/* ── Página principal ── */
 export default function AdminHistoryPage() {
-  const [records, setRecords]   = useState([])
-  const [search, setSearch]     = useState('')
-  const [dateFrom, setDateFrom] = useState('')
-  const [dateTo, setDateTo]     = useState('')
+  const [records, setRecords]     = useState([])
+  const [search, setSearch]       = useState('')
+  const [dateFrom, setDateFrom]   = useState(null)
+  const [dateTo, setDateTo]       = useState(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [fetched, setFetched]   = useState(false)
-  const [error, setError]       = useState('')
-  const [modalRecord, setModalRecord] = useState(null)
-  const [page, setPage]         = useState(1)
+  const [fetched, setFetched]     = useState(false)
+  const [error, setError]         = useState('')
+
+  const [modalRecord, setModalRecord]   = useState(null)
+  const [messages, setMessages]         = useState([])
+  const [modalLoading, setModalLoading] = useState(false)
+  const [modalError, setModalError]     = useState('')
+  const [avatarBroken, setAvatarBroken] = useState(false)
+
+  const toISO = (d) => (d instanceof Date ? d.toISOString().split('T')[0] : '')
 
   const fetchHistory = useCallback(async () => {
     setIsLoading(true)
     setError('')
     try {
       const { data } = await api.get('/admin/history', {
-        params: { search, date_from: dateFrom, date_to: dateTo },
+        params: {
+          search,
+          date_from: toISO(dateFrom),
+          date_to:   toISO(dateTo),
+        },
       })
       setRecords(data)
-      setPage(1)
       setFetched(true)
     } catch (err) {
       setError(err.message)
@@ -183,13 +78,58 @@ export default function AdminHistoryPage() {
     }
   }, [search, dateFrom, dateTo])
 
-  useEffect(() => { fetchHistory() }, [])   // carga inicial sin filtros
+  useEffect(() => { fetchHistory() }, [])
 
-  const handleFilter = (e) => { e.preventDefault(); fetchHistory() }
-  const totalPages    = Math.max(1, Math.ceil(records.length / PAGE_SIZE))
-  const pageRecords   = records.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
-  const rangeStart    = records.length === 0 ? 0 : (page - 1) * PAGE_SIZE + 1
-  const rangeEnd      = Math.min(page * PAGE_SIZE, records.length)
+  const openModal = async (record) => {
+    setModalRecord(record)
+    setMessages([])
+    setModalError('')
+    setAvatarBroken(false)
+    setModalLoading(true)
+    try {
+      const { data } = await api.get(`/admin/sessions/${record.session_id}`)
+      setMessages(data)
+    } catch {
+      setModalError('No se pudo cargar la conversación.')
+    } finally {
+      setModalLoading(false)
+    }
+  }
+
+  /* ── Column templates ── */
+  const userTemplate = (row) => {
+    const name      = row.profiles?.full_name || '—'
+    const avatarUrl = row.profiles?.avatar_url
+    return (
+      <div className="flex items-center gap-2.5">
+        {avatarUrl
+          ? <Avatar image={avatarUrl} shape="circle" size="normal" />
+          : <Avatar label={userInitials(name)} shape="circle" size="normal"
+              style={{ backgroundColor: '#E8F0F7', color: '#003558', fontSize: '11px', fontWeight: 700 }} />
+        }
+        <span className="font-semibold text-text-main text-sm">{name}</span>
+      </div>
+    )
+  }
+
+  const emailTemplate  = (row) => <span className="text-text-muted text-sm">{row.profiles?.email || '—'}</span>
+  const contentTemplate = (row) => <span className="text-text-main text-sm">{truncate(row.content)}</span>
+  const dateTemplate   = (row) => <span className="text-text-muted text-xs whitespace-nowrap">{formatDateTime(row.created_at)}</span>
+
+  const actionTemplate = (row) =>
+    row.session_id ? (
+      <Button label="Ver detalle" link size="small"
+        style={{ color: '#003558', padding: 0, fontWeight: 600 }}
+        onClick={() => openModal(row)} />
+    ) : <span className="text-text-muted text-xs">—</span>
+
+  /* ── Dialog header ── */
+  const dialogHeader = (
+    <div>
+      <p className="font-semibold text-text-main">{modalRecord?.profiles?.full_name || '—'}</p>
+      <p className="text-xs text-text-muted font-normal mt-0.5">{modalRecord?.profiles?.email || '—'}</p>
+    </div>
+  )
 
   return (
     <AdminLayout>
@@ -198,162 +138,120 @@ export default function AdminHistoryPage() {
         <p className="text-sm text-text-muted mt-0.5">Consulta todas las conversaciones del sistema</p>
       </div>
 
-      <form onSubmit={handleFilter} className="card p-4 mb-5">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <input type="text" placeholder="Buscar por usuario, correo o pregunta..."
-            value={search} onChange={(e) => setSearch(e.target.value)}
-            className="input-field flex-1" />
-          <div className="flex items-center gap-2">
-            <input type="date" value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="input-field w-40" aria-label="Desde" />
-            <span className="text-text-muted text-sm">–</span>
-            <input type="date" value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="input-field w-40" aria-label="Hasta" />
+      {/* Filtros */}
+      <div className="card p-4 mb-5">
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+          <div className="flex-1">
+            <span className="p-input-icon-left w-full">
+              <i className="pi pi-search" />
+              <InputText
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && fetchHistory()}
+                placeholder="Buscar por usuario, correo o pregunta..."
+                className="w-full text-sm"
+              />
+            </span>
           </div>
-          <button type="submit" className="btn-primary px-5 flex-shrink-0">Filtrar</button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Calendar value={dateFrom} onChange={(e) => setDateFrom(e.value)}
+              placeholder="Desde" dateFormat="dd/mm/yy" showIcon
+              inputClassName="text-sm" className="w-40" />
+            <span className="text-text-muted text-sm">–</span>
+            <Calendar value={dateTo} onChange={(e) => setDateTo(e.value)}
+              placeholder="Hasta" dateFormat="dd/mm/yy" showIcon
+              inputClassName="text-sm" className="w-40" />
+          </div>
+          <Button label="Filtrar" icon="pi pi-filter" onClick={fetchHistory}
+            loading={isLoading}
+            style={{ backgroundColor: '#003558', borderColor: '#003558', flexShrink: 0 }} />
         </div>
-      </form>
-
-      {isLoading && <div className="flex justify-center py-12"><Spinner size="lg" /></div>}
+      </div>
 
       {error && (
-        <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2
-                      rounded-lg mb-4">{error}</p>
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg mb-4">
+          {error}
+        </p>
       )}
 
-      {!isLoading && fetched && records.length === 0 && (
-        <EmptyState title="Sin resultados"
-          description="No hay conversaciones que coincidan con los filtros aplicados." />
-      )}
+      {/* Tabla */}
+      <DataTable
+        value={records}
+        paginator
+        rows={10}
+        rowsPerPageOptions={[10, 25, 50]}
+        paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+        currentPageReportTemplate="{first}–{last} de {totalRecords}"
+        stripedRows
+        emptyMessage={fetched ? 'Sin resultados' : 'Usa el filtro para buscar conversaciones.'}
+        loading={isLoading}
+        size="normal"
+        className="text-sm"
+        style={{ fontSize: '14px' }}
+      >
+        <Column header="Usuario"  body={userTemplate}    style={{ minWidth: '180px' }} />
+        <Column header="Correo"   body={emailTemplate}   style={{ minWidth: '190px' }} />
+        <Column header="Pregunta" body={contentTemplate} style={{ minWidth: '260px' }} />
+        <Column header="Fecha"    body={dateTemplate}    style={{ minWidth: '160px' }} sortable field="created_at" />
+        <Column body={actionTemplate} style={{ width: '110px' }} />
+      </DataTable>
 
-      {!isLoading && records.length > 0 && (
-        <div className="border border-border overflow-hidden">
-          {/* Desktop */}
-          <div className="hidden sm:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-surface border-b-2 border-border">
-                  {['Usuario', 'Correo', 'Pregunta', 'Fecha', ''].map((h) => (
-                    <th key={h}
-                      className="text-left py-3.5 px-5 text-sm font-bold text-text-main">
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {pageRecords.map((record, idx) => (
-                  <tr key={record.id}
-                    className={`border-b border-border last:border-0 transition-colors
-                      hover:bg-primary-light/40
-                      ${idx % 2 === 0 ? 'bg-white' : 'bg-surface/60'}`}>
-                    <td className="py-4 px-5">
-                      <div className="flex items-center gap-3">
-                        <MiniAvatar
-                          name={record.profiles?.full_name}
-                          avatarUrl={record.profiles?.avatar_url}
-                        />
-                        <span className="font-semibold text-text-main text-sm">
-                          {record.profiles?.full_name || '—'}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-5 text-text-muted text-sm">
-                      {record.profiles?.email || '—'}
-                    </td>
-                    <td className="py-4 px-5 text-text-main text-sm max-w-xs">
-                      {truncate(record.content)}
-                    </td>
-                    <td className="py-4 px-5 text-text-muted text-xs whitespace-nowrap">
-                      {formatDateTime(record.created_at)}
-                    </td>
-                    <td className="py-4 px-5">
-                      {record.session_id ? (
-                        <button onClick={() => setModalRecord(record)}
-                          className="text-primary text-sm font-semibold hover:underline transition-opacity hover:opacity-70">
-                          Ver detalle
-                        </button>
-                      ) : (
-                        <span className="text-text-muted text-xs">—</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Mobile */}
-          <div className="sm:hidden divide-y divide-border">
-            {pageRecords.map((record, idx) => (
-              <div key={record.id}
-                className={`p-4 space-y-2 ${idx % 2 === 0 ? 'bg-white' : 'bg-surface/60'}`}>
-                <div className="flex items-center gap-3">
-                  <MiniAvatar
-                    name={record.profiles?.full_name}
-                    avatarUrl={record.profiles?.avatar_url}
-                  />
-                  <div>
-                    <p className="font-semibold text-text-main text-sm">
-                      {record.profiles?.full_name || '—'}
-                    </p>
-                    <p className="text-xs text-text-muted">{record.profiles?.email || '—'}</p>
-                  </div>
-                </div>
-                <p className="text-sm text-text-main leading-relaxed">{truncate(record.content)}</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-text-muted">{formatDateTime(record.created_at)}</p>
-                  {record.session_id && (
-                    <button onClick={() => setModalRecord(record)}
-                      className="text-primary text-xs font-semibold hover:underline">
-                      Ver detalle
-                    </button>
-                  )}
+      {/* Modal conversación */}
+      <Dialog
+        header={dialogHeader}
+        visible={!!modalRecord}
+        onHide={() => setModalRecord(null)}
+        style={{ width: '560px', maxWidth: '95vw' }}
+        modal
+        dismissableMask
+        breakpoints={{ '640px': '95vw' }}
+      >
+        <div className="overflow-y-auto space-y-3 py-1" style={{ maxHeight: '60vh' }}>
+          {modalLoading && <div className="flex justify-center py-8"><Spinner /></div>}
+          {modalError   && <p className="text-sm text-red-600 text-center">{modalError}</p>}
+          {!modalLoading && messages.map((msg) => {
+            const isUser   = msg.role === 'user'
+            const avatarUrl = modalRecord?.profiles?.avatar_url
+            return (
+              <div key={msg.id}
+                   className={`flex gap-2 items-start ${isUser ? 'flex-row-reverse' : ''}`}>
+                {isUser ? (
+                  avatarUrl && !avatarBroken ? (
+                    <img src={avatarUrl} alt="User"
+                      className="w-7 h-7 rounded-full object-cover border border-border flex-shrink-0"
+                      onError={() => setAvatarBroken(true)} />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-primary/10 border border-border
+                                    flex-shrink-0 flex items-center justify-center">
+                      <svg className="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                      </svg>
+                    </div>
+                  )
+                ) : (
+                  <img src={perfilAgente} alt="SOFIA"
+                    className="w-7 h-7 rounded-full object-cover border border-border flex-shrink-0" />
+                )}
+                <div className={`max-w-[78%] rounded-xl px-3 py-2 text-xs leading-relaxed
+                  ${isUser
+                    ? 'bg-primary text-white rounded-tr-sm'
+                    : 'bg-white border border-border text-text-main rounded-tl-sm'}`}>
+                  {isUser
+                    ? msg.content
+                    : <ReactMarkdown components={MD}>{msg.content}</ReactMarkdown>}
+                  <p className={`text-[10px] mt-1 ${isUser ? 'text-white/60 text-right' : 'text-text-muted'}`}>
+                    {formatTime(msg.created_at)}
+                  </p>
                 </div>
               </div>
-            ))}
-          </div>
-
-          {/* Paginación */}
-          <div className="px-5 py-3.5 border-t border-border flex flex-col sm:flex-row
-                          items-center justify-between gap-2 bg-surface">
-            <span className="text-xs text-text-muted">
-              {records.length === 0
-                ? 'Sin resultados'
-                : `${rangeStart}–${rangeEnd} de ${records.length} resultado${records.length !== 1 ? 's' : ''}`}
-            </span>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1">
-                <button onClick={() => setPage((p) => p - 1)} disabled={page === 1}
-                  className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-muted
-                             hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                  ← Anterior
-                </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                  <button key={p} onClick={() => setPage(p)}
-                    className={`w-7 h-7 text-xs rounded-lg transition-colors
-                      ${p === page
-                        ? 'bg-primary text-white font-bold'
-                        : 'border border-border text-text-muted hover:bg-white'}`}>
-                    {p}
-                  </button>
-                ))}
-                <button onClick={() => setPage((p) => p + 1)} disabled={page === totalPages}
-                  className="px-3 py-1.5 text-xs rounded-lg border border-border text-text-muted
-                             hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed transition-colors">
-                  Siguiente →
-                </button>
-              </div>
-            )}
-          </div>
+            )
+          })}
         </div>
-      )}
-
-      {modalRecord && (
-        <ConversationModal record={modalRecord} onClose={() => setModalRecord(null)} />
-      )}
+        <div className="border-t border-border pt-2 mt-2 text-xs text-text-muted">
+          {messages.length} mensaje{messages.length !== 1 ? 's' : ''}
+        </div>
+      </Dialog>
     </AdminLayout>
   )
 }
