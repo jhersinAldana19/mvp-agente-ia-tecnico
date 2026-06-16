@@ -139,32 +139,50 @@ export default function AdminHistoryPage() {
       </div>
 
       {/* Filtros */}
-      <div className="card p-4 mb-5">
-        <div className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="flex-1">
-            <span className="p-input-icon-left w-full">
-              <i className="pi pi-search" />
-              <InputText
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchHistory()}
-                placeholder="Buscar por usuario, correo o pregunta..."
-                className="w-full text-sm"
-              />
-            </span>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <Calendar value={dateFrom} onChange={(e) => setDateFrom(e.value)}
-              placeholder="Desde" dateFormat="dd/mm/yy" showIcon
-              inputClassName="text-sm" className="w-40" />
-            <span className="text-text-muted text-sm">–</span>
-            <Calendar value={dateTo} onChange={(e) => setDateTo(e.value)}
-              placeholder="Hasta" dateFormat="dd/mm/yy" showIcon
-              inputClassName="text-sm" className="w-40" />
-          </div>
-          <Button label="Filtrar" icon="pi pi-filter" onClick={fetchHistory}
+      <div className="card p-5 mb-5">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <InputText
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && fetchHistory()}
+            placeholder="Buscar por usuario, correo o pregunta..."
+            className="flex-1"
+            style={{ height: '42px', fontSize: '14px' }}
+          />
+          <Calendar
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.value)}
+            placeholder="Desde"
+            dateFormat="dd/mm/yy"
+            showIcon
+            inputStyle={{ height: '42px', fontSize: '14px' }}
+            style={{ width: '170px' }}
+          />
+          <Calendar
+            value={dateTo}
+            onChange={(e) => setDateTo(e.value)}
+            placeholder="Hasta"
+            dateFormat="dd/mm/yy"
+            showIcon
+            inputStyle={{ height: '42px', fontSize: '14px' }}
+            style={{ width: '170px' }}
+          />
+          <Button
+            label="Filtrar"
+            icon="pi pi-search"
+            onClick={fetchHistory}
             loading={isLoading}
-            style={{ backgroundColor: '#003558', borderColor: '#003558', flexShrink: 0 }} />
+            style={{
+              backgroundColor: '#003558',
+              borderColor: '#003558',
+              height: '42px',
+              paddingLeft: '20px',
+              paddingRight: '20px',
+              fontSize: '14px',
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+            }}
+          />
         </div>
       </div>
 
