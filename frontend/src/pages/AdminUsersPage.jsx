@@ -16,14 +16,29 @@ const ROLE_OPTIONS = [
   { label: 'Admin',   value: 'admin' },
 ]
 
+const USAGE_FILTER_OPTIONS = [
+  { label: 'Todos',              value: 'all' },
+  { label: 'Usaron el agente',   value: 'used' },
+  { label: 'Sin usar el agente', value: 'unused' },
+]
+
 function userInitials(name) {
   if (!name) return '?'
   return name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()
 }
 
 function formatDate(isoString) {
+  if (!isoString) return '—'
   return new Date(isoString).toLocaleDateString('es-PE', {
     day: '2-digit', month: '2-digit', year: 'numeric',
+  })
+}
+
+function formatDateTime(isoString) {
+  if (!isoString) return '—'
+  return new Date(isoString).toLocaleString('es-PE', {
+    day: '2-digit', month: '2-digit', year: 'numeric',
+    hour: '2-digit', minute: '2-digit',
   })
 }
 
@@ -33,15 +48,26 @@ export default function AdminUsersPage() {
   const [error, setError]         = useState('')
   const [saving, setSaving]       = useState({})
   const [search, setSearch]       = useState('')
+  const [usageFilter, setUsageFilter] = useState('all')
+
+  const usageStats = useMemo(() => {
+    const used = users.filter((u) => u.has_used_agent).length
+    return { used, unused: users.length - used, total: users.length }
+  }, [users])
 
   const filteredUsers = useMemo(() => {
     const needle = search.trim().toLowerCase()
-    if (!needle) return users
-    return users.filter((u) =>
-      (u.full_name || '').toLowerCase().includes(needle) ||
-      (u.email || '').toLowerCase().includes(needle)
-    )
-  }, [users, search])
+    return users.filter((u) => {
+      const matchesSearch = !needle ||
+        (u.full_name || '').toLowerCase().includes(needle) ||
+        (u.email || '').toLowerCase().includes(needle)
+      const matchesUsage =
+        usageFilter === 'all' ||
+        (usageFilter === 'used' && u.has_used_agent) ||
+        (usageFilter === 'unused' && !u.has_used_agent)
+      return matchesSearch && matchesUsage
+    })
+  }, [users, search, usageFilter])
 
   useEffect(() => {
     api.get('/admin/users')
@@ -84,6 +110,26 @@ export default function AdminUsersPage() {
     />
   )
 
+  const usageTemplate = (row) => (
+    <Tag
+      value={row.has_used_agent ? 'Sí' : 'No'}
+      severity={row.has_used_agent ? 'success' : 'secondary'}
+      style={{ fontSize: '11px', fontWeight: 600 }}
+    />
+  )
+
+  const lastUseTemplate = (row) => (
+    <span className="text-text-muted text-xs whitespace-nowrap">
+      {row.has_used_agent ? formatDateTime(row.last_agent_use_at) : '—'}
+    </span>
+  )
+
+  const sessionsTemplate = (row) => (
+    <span className="text-text-muted text-sm">
+      {row.has_used_agent ? row.session_count : '—'}
+    </span>
+  )
+
   const dateTemplate = (row) => (
     <span className="text-text-muted text-xs">{formatDate(row.created_at)}</span>
   )
@@ -111,8 +157,15 @@ export default function AdminUsersPage() {
           <h1 className="text-xl font-semibold text-text-main">Usuarios</h1>
           <p className="text-sm text-text-muted mt-0.5">Gestiona los usuarios del sistema</p>
         </div>
-        <div className="text-xs text-text-muted bg-surface border border-border px-3 py-2 rounded-lg">
-          Crear usuarios desde Supabase Auth
+        <div className="flex items-center gap-3">
+          {!isLoading && users.length > 0 && (
+            <div className="text-xs text-text-muted bg-surface border border-border px-3 py-2 rounded-lg">
+              {usageStats.used} de {usageStats.total} usaron el agente
+            </div>
+          )}
+          <div className="text-xs text-text-muted bg-surface border border-border px-3 py-2 rounded-lg">
+            Crear usuarios desde Supabase Auth
+          </div>
         </div>
       </div>
 
@@ -139,20 +192,27 @@ export default function AdminUsersPage() {
         <>
           {/* Filtro */}
           <div className="card p-5 mb-5">
-            <div className="flex gap-3">
+            <div className="flex flex-wrap gap-3">
               <InputText
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar por nombre o correo..."
                 className="flex-1"
-                style={{ height: '42px', fontSize: '14px' }}
+                style={{ height: '42px', fontSize: '14px', minWidth: '200px' }}
+              />
+              <Dropdown
+                value={usageFilter}
+                options={USAGE_FILTER_OPTIONS}
+                onChange={(e) => setUsageFilter(e.value)}
+                style={{ height: '42px', minWidth: '200px' }}
+                className="text-sm"
               />
               <Button
                 label="Limpiar"
                 icon="pi pi-times"
-                onClick={() => setSearch('')}
+                onClick={() => { setSearch(''); setUsageFilter('all') }}
                 outlined
-                disabled={!search}
+                disabled={!search && usageFilter === 'all'}
                 style={{
                   borderColor: '#003558',
                   color: '#003558',
@@ -182,11 +242,14 @@ export default function AdminUsersPage() {
           className="text-sm"
           style={{ fontSize: '14px' }}
         >
-          <Column header="Nombre"        body={userTemplate}   style={{ minWidth: '180px' }} />
-          <Column header="Correo"        body={emailTemplate}  style={{ minWidth: '200px' }} />
-          <Column header="Rol"           body={roleTemplate}   style={{ width: '110px' }} />
-          <Column header="Miembro desde" body={dateTemplate}   style={{ minWidth: '130px' }} sortable field="created_at" />
-          <Column header="Cambiar rol"   body={actionTemplate} style={{ minWidth: '180px' }} />
+          <Column header="Nombre"          body={userTemplate}      style={{ minWidth: '180px' }} />
+          <Column header="Correo"          body={emailTemplate}     style={{ minWidth: '200px' }} />
+          <Column header="Rol"             body={roleTemplate}      style={{ width: '110px' }} />
+          <Column header="Usó el agente"   body={usageTemplate}     style={{ width: '130px' }} sortable field="has_used_agent" />
+          <Column header="Última consulta" body={lastUseTemplate}   style={{ minWidth: '150px' }} sortable field="last_agent_use_at" />
+          <Column header="Sesiones"        body={sessionsTemplate}  style={{ width: '100px' }} sortable field="session_count" />
+          <Column header="Miembro desde"   body={dateTemplate}      style={{ minWidth: '130px' }} sortable field="created_at" />
+          <Column header="Cambiar rol"     body={actionTemplate}    style={{ minWidth: '180px' }} />
         </DataTable>
         </>
       )}

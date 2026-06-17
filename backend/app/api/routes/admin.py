@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.core.security import get_current_user
-from app.schemas.user import UpdateRoleRequest, UserProfile, UserRole
+from app.schemas.user import AdminUserProfile, UpdateRoleRequest, UserProfile, UserRole
 from app.services.supabase_service import SupabaseService
 
 router = APIRouter()
@@ -34,11 +34,11 @@ async def get_global_history(
     return db.get_global_history(search, date_from, date_to)
 
 
-@router.get("/users", response_model=List[UserProfile])
+@router.get("/users", response_model=List[AdminUserProfile])
 async def list_users(current_user: dict = Depends(_get_admin_user)):
     db = SupabaseService()
     _assert_admin(db, current_user["id"])
-    return db.list_profiles()
+    return db.list_profiles_with_agent_usage()
 
 
 @router.get("/sessions/{session_id}", response_model=List[dict])

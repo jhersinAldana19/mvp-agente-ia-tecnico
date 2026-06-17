@@ -27,3 +27,9 @@ class UpdateRoleRequest(BaseModel):
 class UpdateProfileRequest(BaseModel):
     full_name: Optional[str] = None
     avatar_url: Optional[str] = None
+
+
+class AdminUserProfile(UserProfile):
+    has_used_agent: bool = False
+    session_count: int = 0
+    last_agent_use_at: Optional[datetime] = None

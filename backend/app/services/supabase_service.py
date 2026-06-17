@@ -43,6 +43,34 @@ class SupabaseService:
         )
         return [UserProfile(**u) for u in (result.data or [])]
 
+    def list_profiles_with_agent_usage(self) -> List[dict]:
+        profiles = self.list_profiles()
+        sessions = (
+            self._db.table("chat_sessions")
+            .select("user_id, created_at")
+            .execute()
+            .data or []
+        )
+        usage_by_user: dict = {}
+        for session in sessions:
+            uid = session["user_id"]
+            created = session["created_at"]
+            if uid not in usage_by_user:
+                usage_by_user[uid] = {"session_count": 0, "last_agent_use_at": created}
+            usage_by_user[uid]["session_count"] += 1
+            if created > usage_by_user[uid]["last_agent_use_at"]:
+                usage_by_user[uid]["last_agent_use_at"] = created
+
+        return [
+            {
+                **profile.model_dump(),
+                "has_used_agent": profile.id in usage_by_user,
+                "session_count": usage_by_user.get(profile.id, {}).get("session_count", 0),
+                "last_agent_use_at": usage_by_user.get(profile.id, {}).get("last_agent_use_at"),
+            }
+            for profile in profiles
+        ]
+
     def update_profile(
         self,
         user_id: str,
@@ -141,28 +169,24 @@ class SupabaseService:
     def get_global_history(
         self, search: str = "", date_from: str = "", date_to: str = ""
     ) -> List[dict]:
-        # Date filters applied at DB level; text search applied in Python after
-        # joining profiles (so it can match name, email and content).
+        # One row per chat session (not per question). Text search runs in Python
+        # after joining profiles so it can match name, email, title and messages.
         query = (
-            self._db.table("chat_messages")
-            .select("id, session_id, content, created_at, user_id")
-            .eq("role", "user")
+            self._db.table("chat_sessions")
+            .select("id, user_id, title, created_at, updated_at, chat_messages(role, content)")
             .order("created_at", desc=True)
             .limit(500)
         )
         if date_from:
             query = query.gte("created_at", date_from)
         if date_to:
-            # Include the full end day (timestamps go up to 23:59:59).
             query = query.lte("created_at", f"{date_to}T23:59:59")
-        messages = query.execute().data or []
+        sessions = query.execute().data or []
 
-        if not messages:
+        if not sessions:
             return []
 
-        # Fetch profiles separately — chat_messages.user_id references auth.users,
-        # not public.profiles, so PostgREST can't resolve the join automatically.
-        user_ids = list({m["user_id"] for m in messages})
+        user_ids = list({s["user_id"] for s in sessions})
         profiles_by_id = {
             p["id"]: p
             for p in (
@@ -176,18 +200,26 @@ class SupabaseService:
 
         needle = search.strip().lower() if search else ""
         result = []
-        for m in messages:
-            profile = profiles_by_id.get(m["user_id"])
+        for session in sessions:
+            messages = session.pop("chat_messages", []) or []
+            user_messages = [m for m in messages if m.get("role") == "user"]
+            profile = profiles_by_id.get(session["user_id"])
+
             if needle:
-                name  = (profile or {}).get("full_name", "") or ""
+                name = (profile or {}).get("full_name", "") or ""
                 email = (profile or {}).get("email", "") or ""
-                if not (
-                    needle in m["content"].lower()
-                    or needle in name.lower()
-                    or needle in email.lower()
-                ):
+                title = session.get("title", "") or ""
+                contents = " ".join(m.get("content", "") for m in user_messages)
+                haystack = f"{name} {email} {title} {contents}".lower()
+                if needle not in haystack:
                     continue
-            result.append({**m, "profiles": profile})
+
+            result.append({
+                **session,
+                "question_count": len(user_messages),
+                "message_count": len(messages),
+                "profiles": profile,
+            })
         return result
 
 

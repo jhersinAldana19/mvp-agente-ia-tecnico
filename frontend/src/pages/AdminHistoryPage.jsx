@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { Avatar } from 'primereact/avatar'
 import { Button } from 'primereact/button'
@@ -93,7 +93,7 @@ export default function AdminHistoryPage() {
     setAvatarBroken(false)
     setModalLoading(true)
     try {
-      const { data } = await api.get(`/admin/sessions/${record.session_id}`)
+      const { data } = await api.get(`/admin/sessions/${record.id}`)
       setMessages(data)
     } catch {
       setModalError('No se pudo cargar la conversación.')
@@ -119,11 +119,16 @@ export default function AdminHistoryPage() {
   }
 
   const emailTemplate  = (row) => <span className="text-text-muted text-sm">{row.profiles?.email || '—'}</span>
-  const contentTemplate = (row) => <span className="text-text-main text-sm">{truncate(row.content)}</span>
+  const titleTemplate  = (row) => <span className="text-text-main text-sm">{truncate(row.title)}</span>
+  const countTemplate  = (row) => (
+    <span className="text-text-muted text-sm">
+      {row.question_count} pregunta{row.question_count !== 1 ? 's' : ''}
+    </span>
+  )
   const dateTemplate   = (row) => <span className="text-text-muted text-xs whitespace-nowrap">{formatDateTime(row.created_at)}</span>
 
   const actionTemplate = (row) =>
-    row.session_id ? (
+    row.id ? (
       <Button label="Ver detalle" link size="small"
         style={{ color: '#003558', padding: 0, fontWeight: 600 }}
         onClick={() => openModal(row)} />
@@ -141,7 +146,7 @@ export default function AdminHistoryPage() {
     <AdminLayout>
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-text-main">Historial global</h1>
-        <p className="text-sm text-text-muted mt-0.5">Consulta todas las conversaciones del sistema</p>
+        <p className="text-sm text-text-muted mt-0.5">Consulta las sesiones de chat agrupadas por conversación</p>
       </div>
 
       {/* Filtros */}
@@ -152,7 +157,7 @@ export default function AdminHistoryPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && fetchHistory()}
-            placeholder="Buscar por usuario, correo o pregunta..."
+            placeholder="Buscar por usuario, correo o conversación..."
             className="w-full"
             style={{ height: '42px', fontSize: '14px' }}
           />
@@ -239,11 +244,12 @@ export default function AdminHistoryPage() {
         className="text-sm"
         style={{ fontSize: '14px' }}
       >
-        <Column header="Usuario"  body={userTemplate}    style={{ minWidth: '180px' }} />
-        <Column header="Correo"   body={emailTemplate}   style={{ minWidth: '190px' }} />
-        <Column header="Pregunta" body={contentTemplate} style={{ minWidth: '260px' }} />
-        <Column header="Fecha"    body={dateTemplate}    style={{ minWidth: '160px' }} sortable field="created_at" />
-        <Column header="Acción"   body={actionTemplate}  style={{ width: '110px' }} />
+        <Column header="Usuario"       body={userTemplate}  style={{ minWidth: '180px' }} />
+        <Column header="Correo"        body={emailTemplate} style={{ minWidth: '190px' }} />
+        <Column header="Conversación"  body={titleTemplate} style={{ minWidth: '260px' }} />
+        <Column header="Preguntas"     body={countTemplate} style={{ minWidth: '110px' }} />
+        <Column header="Fecha"         body={dateTemplate}  style={{ minWidth: '160px' }} sortable field="created_at" />
+        <Column header="Acción"        body={actionTemplate} style={{ width: '110px' }} />
       </DataTable>
 
       {/* Modal conversación */}
