@@ -43,9 +43,22 @@ function UserChip({ profile }) {
   )
 }
 
-export default function TechnicianLayout({ children, fullWidth = false, bgImage = null }) {
+const MAX_WIDTH_CLASS = {
+  '4xl': 'max-w-4xl',
+  '5xl': 'max-w-5xl',
+  '6xl': 'max-w-6xl',
+  full: '',
+}
+
+export default function TechnicianLayout({
+  children,
+  fullWidth = false,
+  maxWidth = '4xl',
+  bgImage = null,
+}) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
+  const widthClass = fullWidth ? MAX_WIDTH_CLASS.full : (MAX_WIDTH_CLASS[maxWidth] || MAX_WIDTH_CLASS['4xl'])
 
   const handleSignOut = async () => {
     await signOut()
@@ -55,7 +68,7 @@ export default function TechnicianLayout({ children, fullWidth = false, bgImage 
   return (
     <div className="min-h-screen flex flex-col bg-surface">
       <header className="bg-white border-b border-border sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className={`${widthClass} mx-auto px-4 w-full`}>
           <div className="flex items-center justify-between h-14 lg:h-20">
 
             {/* Logo */}
@@ -100,7 +113,7 @@ export default function TechnicianLayout({ children, fullWidth = false, bgImage 
       </header>
 
       <main
-        className={`flex-1 w-full px-4 py-6 ${fullWidth ? '' : 'max-w-4xl mx-auto'}`}
+        className={`flex-1 w-full px-4 py-6 ${widthClass} mx-auto`}
         style={bgImage ? { backgroundImage: `url(${bgImage})`, backgroundSize: 'cover', backgroundPosition: 'center' } : undefined}
       >
         {children}

@@ -135,13 +135,13 @@ export default function TechnicianChatPage() {
   }
 
   return (
-    <TechnicianLayout>
+    <TechnicianLayout maxWidth="6xl">
 
       {/* Layout de dos columnas */}
       <div className="flex gap-4" style={{ height: 'calc(100dvh - 9.5rem)', minHeight: '420px' }}>
 
         {/* Sidebar SOFIA — solo desktop */}
-        <aside className="hidden lg:flex flex-col w-[268px] flex-shrink-0 overflow-y-auto rounded-xl">
+        <aside className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 overflow-y-auto rounded-xl">
           <SofiaPanel />
         </aside>
 
