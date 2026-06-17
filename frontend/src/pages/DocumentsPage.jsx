@@ -263,10 +263,10 @@ export default function DocumentsPage() {
         {!activeFile && (
           <>
             {/* Banner de imagen superior */}
-            <div className="relative flex-shrink-0 h-36 sm:h-44 md:h-48 overflow-hidden bg-[#e8edf2]">
+            <div className="relative flex-shrink-0 h-36 sm:h-44 md:h-48 overflow-hidden">
               <img src={fondoDocumentos} alt="Equipos TECPORT"
-                className="w-full h-full object-contain object-center" />
-              <div className="absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/45 pointer-events-none" />
+                className="w-full h-full object-cover object-center" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/50 pointer-events-none" />
               <div className="absolute bottom-3 left-4 sm:bottom-4 sm:left-5">
                 <h1 className="text-white text-base sm:text-lg font-bold leading-tight">
                   TECPORT · Documentos
