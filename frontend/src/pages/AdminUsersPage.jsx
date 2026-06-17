@@ -88,18 +88,21 @@ export default function AdminUsersPage() {
 
   /* ── Column templates ── */
   const userTemplate = (row) => (
-    <div className="flex items-center gap-2.5">
+    <div className="flex items-center gap-2 min-w-0">
       {row.avatar_url
-        ? <Avatar image={row.avatar_url} shape="circle" size="normal" />
+        ? <Avatar image={row.avatar_url} shape="circle" size="normal"
+            style={{ width: '2rem', height: '2rem' }} />
         : <Avatar label={userInitials(row.full_name)} shape="circle" size="normal"
-            style={{ backgroundColor: '#E8F0F7', color: '#003558', fontSize: '11px', fontWeight: 700 }} />
+            style={{ backgroundColor: '#E8F0F7', color: '#003558', fontSize: '10px', fontWeight: 700, width: '2rem', height: '2rem' }} />
       }
-      <span className="font-semibold text-text-main text-sm">{row.full_name || '—'}</span>
+      <span className="font-medium text-text-main text-sm truncate">{row.full_name || '—'}</span>
     </div>
   )
 
   const emailTemplate = (row) => (
-    <span className="text-text-muted text-sm">{row.email}</span>
+    <span className="text-text-muted text-xs truncate block max-w-[180px]" title={row.email}>
+      {row.email}
+    </span>
   )
 
   const roleTemplate = (row) => (
@@ -119,7 +122,7 @@ export default function AdminUsersPage() {
   )
 
   const lastUseTemplate = (row) => (
-    <span className="text-text-muted text-xs whitespace-nowrap">
+    <span className="text-text-muted text-xs whitespace-nowrap" title={row.last_agent_use_at || ''}>
       {row.has_used_agent ? formatDateTime(row.last_agent_use_at) : '—'}
     </span>
   )
@@ -135,31 +138,31 @@ export default function AdminUsersPage() {
   )
 
   const actionTemplate = (row) => (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       <Dropdown
         value={row.role}
         options={ROLE_OPTIONS}
         onChange={(e) => handleRoleChange(row.id, e.value)}
         disabled={!!saving[row.id]}
-        style={{ fontSize: '13px' }}
-        className="text-sm"
+        style={{ fontSize: '12px', minWidth: '7.5rem' }}
+        className="text-sm admin-role-dropdown"
       />
       {saving[row.id] && (
-        <ProgressSpinner style={{ width: '20px', height: '20px' }} strokeWidth="5" />
+        <ProgressSpinner style={{ width: '18px', height: '18px' }} strokeWidth="5" />
       )}
     </div>
   )
 
   return (
     <AdminLayout>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5 sm:mb-6">
         <div>
           <h1 className="text-xl font-semibold text-text-main">Usuarios</h1>
           <p className="text-sm text-text-muted mt-0.5">Gestiona los usuarios del sistema</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           {!isLoading && users.length > 0 && (
-            <div className="text-xs text-text-muted bg-surface border border-border px-3 py-2 rounded-lg">
+            <div className="text-xs text-text-muted bg-surface border border-border px-3 py-2 rounded-lg whitespace-nowrap">
               {usageStats.used} de {usageStats.total} usaron el agente
             </div>
           )}
@@ -191,7 +194,7 @@ export default function AdminUsersPage() {
       {!isLoading && users.length > 0 && (
         <>
           {/* Filtro */}
-          <div className="card p-5 mb-5">
+          <div className="card p-4 sm:p-5 mb-4 sm:mb-5">
             <div className="flex flex-wrap gap-3">
               <InputText
                 value={search}
@@ -227,6 +230,7 @@ export default function AdminUsersPage() {
             </div>
           </div>
 
+        <div className="admin-table-wrap">
         <DataTable
           value={filteredUsers}
           paginator
@@ -236,21 +240,21 @@ export default function AdminUsersPage() {
           currentPageReportTemplate="{first}–{last} de {totalRecords}"
           stripedRows
           emptyMessage="Sin usuarios que coincidan con la búsqueda"
-          size="normal"
+          size="small"
           responsiveLayout="stack"
-          breakpoint="767px"
-          className="text-sm"
-          style={{ fontSize: '14px' }}
+          breakpoint="960px"
+          className="text-sm admin-datatable"
         >
-          <Column header="Nombre"          body={userTemplate}      style={{ minWidth: '180px' }} />
-          <Column header="Correo"          body={emailTemplate}     style={{ minWidth: '200px' }} />
-          <Column header="Rol"             body={roleTemplate}      style={{ width: '110px' }} />
-          <Column header="Usó el agente"   body={usageTemplate}     style={{ width: '130px' }} sortable field="has_used_agent" />
-          <Column header="Última consulta" body={lastUseTemplate}   style={{ minWidth: '150px' }} sortable field="last_agent_use_at" />
-          <Column header="Sesiones"        body={sessionsTemplate}  style={{ width: '100px' }} sortable field="session_count" />
-          <Column header="Miembro desde"   body={dateTemplate}      style={{ minWidth: '130px' }} sortable field="created_at" />
-          <Column header="Cambiar rol"     body={actionTemplate}    style={{ minWidth: '180px' }} />
+          <Column header="Nombre"        body={userTemplate}     style={{ minWidth: '9rem' }} />
+          <Column header="Correo"        body={emailTemplate}    style={{ minWidth: '10rem' }} />
+          <Column header="Rol"           body={roleTemplate}     style={{ width: '5.5rem' }} />
+          <Column header="Agente"        body={usageTemplate}    style={{ width: '5rem' }} sortable field="has_used_agent" />
+          <Column header="Última"        body={lastUseTemplate}   style={{ minWidth: '8.5rem' }} sortable field="last_agent_use_at" />
+          <Column header="Sesiones"      body={sessionsTemplate} style={{ width: '4.5rem' }} sortable field="session_count" />
+          <Column header="Registro"      body={dateTemplate}     style={{ minWidth: '6rem' }} sortable field="created_at" />
+          <Column header="Cambiar rol"   body={actionTemplate}   style={{ minWidth: '8.5rem' }} />
         </DataTable>
+        </div>
         </>
       )}
     </AdminLayout>

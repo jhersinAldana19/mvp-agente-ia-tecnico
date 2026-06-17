@@ -1,75 +1,12 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useAdminSidebar } from '../../hooks/useAdminSidebar'
+import AdminSidebar, { MenuIcon } from './AdminSidebar'
 import logoTecport from '../../assets/branding/logo-tecport-blanco.webp'
 
-const NAV_ITEMS = [
-  {
-    to: '/admin/history',
-    label: 'Historial global',
-    icon: (
-      <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-          d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2
-             M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-      </svg>
-    ),
-  },
-  {
-    to: '/admin/users',
-    label: 'Usuarios',
-    icon: (
-      <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-          d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87
-             M16 7a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-    ),
-  },
-]
+const SIDEBAR_WIDTH = '15rem' // w-60
 
-// ─── Sidebar ──────────────────────────────────────────────────────────────────
-function Sidebar({ onClose, onSignOut }) {
-  return (
-    <aside className="w-60 bg-primary flex flex-col h-full">
-      {/* Logo */}
-      <div className="p-5 border-b border-white/10 flex-shrink-0">
-        <img src={logoTecport} alt="TECPORT AI" className="h-10 w-auto" />
-        <p className="text-white/60 text-xs mt-2">Panel administrativo</p>
-      </div>
-
-      {/* Nav items */}
-      <nav className="flex-1 p-3 space-y-1 overflow-y-auto" aria-label="Menú admin">
-        {NAV_ITEMS.map(({ to, label, icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            onClick={onClose}
-            className={({ isActive }) =>
-              isActive ? 'sidebar-item-active' : 'sidebar-item-inactive'
-            }
-          >
-            {icon}
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
-
-      {/* Cerrar sesión (visible en mobile sidebar y en sidebar desktop) */}
-      <div className="p-3 border-t border-white/10 flex-shrink-0">
-        <button onClick={onSignOut} className="sidebar-item-inactive w-full">
-          <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-          </svg>
-          <span>Cerrar sesión</span>
-        </button>
-      </div>
-    </aside>
-  )
-}
-
-// ─── Avatar del admin ─────────────────────────────────────────────────────────
 function AdminAvatar({ profile }) {
   const [broken, setBroken] = useState(false)
   const initials = profile?.full_name
@@ -91,9 +28,31 @@ function AdminAvatar({ profile }) {
   )
 }
 
-// ─── Layout principal ─────────────────────────────────────────────────────────
+function SidebarToggle({ onClick, label = 'Abrir menú' }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="text-text-muted hover:text-text-main p-1.5 rounded-lg hover:bg-surface
+                 transition-colors flex-shrink-0"
+      aria-label={label}
+      title={label}
+    >
+      <MenuIcon />
+    </button>
+  )
+}
+
 export default function AdminLayout({ children }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const {
+    desktopCollapsed,
+    mobileOpen,
+    collapseDesktop,
+    expandDesktop,
+    openMobile,
+    closeMobile,
+  } = useAdminSidebar()
+
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
 
@@ -102,52 +61,59 @@ export default function AdminLayout({ children }) {
     navigate('/')
   }
 
-  return (
-    /* h-screen + overflow-hidden en el root: la página en sí no scrollea.
-       Solo el <main> interno tiene overflow-y-auto → sidebar siempre visible. */
-    <div className="flex h-screen overflow-hidden bg-surface">
+  const showDesktopExpand = desktopCollapsed
 
-      {/* ── Sidebar desktop (estático, no scrollea) ───────────────────────── */}
-      <div className="hidden lg:flex flex-shrink-0 h-full">
-        <Sidebar onSignOut={handleSignOut} />
+  return (
+    <div className="flex h-screen overflow-hidden bg-surface">
+      {/* Desktop sidebar — animates width */}
+      <div
+        className="hidden lg:block flex-shrink-0 h-full overflow-hidden transition-[width] duration-300 ease-in-out"
+        style={{ width: desktopCollapsed ? 0 : SIDEBAR_WIDTH }}
+        aria-hidden={desktopCollapsed}
+      >
+        <div className="h-full" style={{ width: SIDEBAR_WIDTH }}>
+          <AdminSidebar
+            showCollapse
+            onCollapse={collapseDesktop}
+            onSignOut={handleSignOut}
+          />
+        </div>
       </div>
 
-      {/* ── Mobile sidebar overlay ────────────────────────────────────────── */}
-      {sidebarOpen && (
+      {/* Mobile sidebar overlay */}
+      {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
-          <div className="absolute inset-0 bg-black/40"
-            onClick={() => setSidebarOpen(false)} />
-          <div className="absolute left-0 top-0 h-full">
-            <Sidebar
-              onClose={() => setSidebarOpen(false)}
-              onSignOut={handleSignOut}
-            />
+          <div className="absolute inset-0 bg-black/40" onClick={closeMobile} aria-hidden="true" />
+          <div className="absolute left-0 top-0 h-full shadow-xl">
+            <AdminSidebar onNavClick={closeMobile} onSignOut={handleSignOut} />
           </div>
         </div>
       )}
 
-      {/* ── Área derecha: header + contenido scrollable ───────────────────── */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-
-        {/* Header desktop */}
+        {/* Desktop header */}
         <header className="hidden lg:flex flex-shrink-0 bg-white border-b border-border shadow-sm
-                           px-6 h-16 items-center justify-between z-10">
-          <p className="text-sm font-semibold text-text-muted tracking-wide uppercase">
-            Panel Administrativo
-          </p>
-          <div className="flex items-center gap-3">
+                           px-4 xl:px-6 h-14 items-center justify-between gap-3 z-10">
+          <div className="flex items-center gap-3 min-w-0">
+            {showDesktopExpand && <SidebarToggle onClick={expandDesktop} />}
+            <p className="text-sm font-semibold text-text-muted tracking-wide uppercase truncate">
+              Panel Administrativo
+            </p>
+          </div>
+          <div className="flex items-center gap-3 flex-shrink-0">
             <Link to="/admin/profile"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity rounded-full"
               title="Mi perfil">
               <AdminAvatar profile={profile} />
-              <span className="text-sm font-medium text-text-main max-w-[160px] truncate">
+              <span className="text-sm font-medium text-text-main max-w-[140px] truncate hidden xl:inline">
                 {profile?.full_name || ''}
               </span>
             </Link>
-            <div className="w-px h-5 bg-border" />
+            <div className="w-px h-5 bg-border hidden xl:block" />
             <button
+              type="button"
               onClick={handleSignOut}
-              className="flex items-center gap-1.5 text-sm text-text-muted
+              className="hidden xl:flex items-center gap-1.5 text-sm text-text-muted
                          hover:text-text-main transition-colors"
               title="Cerrar sesión"
             >
@@ -160,27 +126,16 @@ export default function AdminLayout({ children }) {
           </div>
         </header>
 
-        {/* Header mobile */}
+        {/* Mobile header */}
         <header className="lg:hidden flex-shrink-0 bg-white border-b border-border
                            px-4 h-14 flex items-center gap-3">
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="text-text-muted hover:text-text-main p-1.5 rounded-lg hover:bg-surface"
-            aria-label="Abrir menú"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
+          <SidebarToggle onClick={openMobile} />
           <img src={logoTecport} alt="TECPORT AI" className="h-7 w-auto" />
         </header>
 
-        {/* Contenido — único elemento que scrollea */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5 lg:p-6">
           {children}
         </main>
-
       </div>
     </div>
   )

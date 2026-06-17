@@ -83,4 +83,28 @@
   .sidebar-item-inactive {
     @apply sidebar-item text-white/65 hover:bg-white/10 hover:text-white;
   }
+
+  .admin-table-wrap {
+    @apply w-full overflow-x-auto rounded-lg;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .admin-datatable {
+    min-width: 52rem;
+  }
+
+  @media (max-width: 960px) {
+    .admin-datatable {
+      min-width: 0;
+    }
+  }
+
+  .admin-datatable .p-datatable-thead > tr > th,
+  .admin-datatable .p-datatable-tbody > tr > td {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .admin-role-dropdown .p-dropdown-label {
+    padding: 0.35rem 0.5rem;
+  }
 }

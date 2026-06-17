@@ -228,6 +228,7 @@ export default function AdminHistoryPage() {
       )}
 
       {/* Tabla */}
+      <div className="admin-table-wrap">
       <DataTable
         value={records}
         paginator
@@ -238,19 +239,19 @@ export default function AdminHistoryPage() {
         stripedRows
         emptyMessage={fetched ? 'Sin resultados' : 'Usa el filtro para buscar conversaciones.'}
         loading={isLoading}
-        size="normal"
+        size="small"
         responsiveLayout="stack"
-        breakpoint="767px"
-        className="text-sm"
-        style={{ fontSize: '14px' }}
+        breakpoint="960px"
+        className="text-sm admin-datatable"
       >
-        <Column header="Usuario"       body={userTemplate}  style={{ minWidth: '180px' }} />
-        <Column header="Correo"        body={emailTemplate} style={{ minWidth: '190px' }} />
-        <Column header="Conversación"  body={titleTemplate} style={{ minWidth: '260px' }} />
-        <Column header="Preguntas"     body={countTemplate} style={{ minWidth: '110px' }} />
-        <Column header="Fecha"         body={dateTemplate}  style={{ minWidth: '160px' }} sortable field="created_at" />
-        <Column header="Acción"        body={actionTemplate} style={{ width: '110px' }} />
+        <Column header="Usuario"       body={userTemplate}  style={{ minWidth: '9rem' }} />
+        <Column header="Correo"        body={emailTemplate} style={{ minWidth: '10rem' }} />
+        <Column header="Conversación"  body={titleTemplate} style={{ minWidth: '14rem' }} />
+        <Column header="Preguntas"     body={countTemplate} style={{ minWidth: '5.5rem' }} />
+        <Column header="Fecha"         body={dateTemplate}  style={{ minWidth: '8rem' }} sortable field="created_at" />
+        <Column header="Acción"        body={actionTemplate} style={{ minWidth: '5.5rem' }} />
       </DataTable>
+      </div>
 
       {/* Modal conversación */}
       <Dialog
