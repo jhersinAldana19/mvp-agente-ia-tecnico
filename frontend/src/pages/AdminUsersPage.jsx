@@ -247,7 +247,7 @@ export default function AdminUsersPage() {
         >
           <Column header="Nombre"              body={userTemplate}     style={{ minWidth: '9rem' }} />
           <Column header="Correo"              body={emailTemplate}    style={{ minWidth: '10rem' }} />
-          <Column header="Rol en el sistema"   body={roleTemplate}     style={{ minWidth: '6.5rem' }} />
+          <Column header="Rol"   body={roleTemplate}     style={{ minWidth: '6.5rem' }} />
           <Column
             header="Usó el agente"
             body={usageTemplate}
