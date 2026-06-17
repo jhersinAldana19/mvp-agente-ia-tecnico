@@ -115,9 +115,9 @@ export default function AdminUsersPage() {
 
   const usageTemplate = (row) => (
     <Tag
-      value={row.has_used_agent ? 'Sí' : 'No'}
+      value={row.has_used_agent ? 'Sí, consultó' : 'Sin consultas'}
       severity={row.has_used_agent ? 'success' : 'secondary'}
-      style={{ fontSize: '11px', fontWeight: 600 }}
+      style={{ fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}
     />
   )
 
@@ -245,14 +245,32 @@ export default function AdminUsersPage() {
           breakpoint="960px"
           className="text-sm admin-datatable"
         >
-          <Column header="Nombre"        body={userTemplate}     style={{ minWidth: '9rem' }} />
-          <Column header="Correo"        body={emailTemplate}    style={{ minWidth: '10rem' }} />
-          <Column header="Rol"           body={roleTemplate}     style={{ width: '5.5rem' }} />
-          <Column header="Agente"        body={usageTemplate}    style={{ width: '5rem' }} sortable field="has_used_agent" />
-          <Column header="Última"        body={lastUseTemplate}   style={{ minWidth: '8.5rem' }} sortable field="last_agent_use_at" />
-          <Column header="Sesiones"      body={sessionsTemplate} style={{ width: '4.5rem' }} sortable field="session_count" />
-          <Column header="Registro"      body={dateTemplate}     style={{ minWidth: '6rem' }} sortable field="created_at" />
-          <Column header="Cambiar rol"   body={actionTemplate}   style={{ minWidth: '8.5rem' }} />
+          <Column header="Nombre"              body={userTemplate}     style={{ minWidth: '9rem' }} />
+          <Column header="Correo"              body={emailTemplate}    style={{ minWidth: '10rem' }} />
+          <Column header="Rol en el sistema"   body={roleTemplate}     style={{ minWidth: '6.5rem' }} />
+          <Column
+            header="Usó el agente"
+            body={usageTemplate}
+            style={{ minWidth: '7.5rem' }}
+            sortable
+            field="has_used_agent"
+          />
+          <Column
+            header="Última consulta"
+            body={lastUseTemplate}
+            style={{ minWidth: '9rem' }}
+            sortable
+            field="last_agent_use_at"
+          />
+          <Column
+            header="Sesiones de chat"
+            body={sessionsTemplate}
+            style={{ minWidth: '6rem' }}
+            sortable
+            field="session_count"
+          />
+          <Column header="Miembro desde"       body={dateTemplate}     style={{ minWidth: '6.5rem' }} sortable field="created_at" />
+          <Column header="Cambiar rol"         body={actionTemplate}   style={{ minWidth: '8.5rem' }} />
         </DataTable>
         </div>
         </>
