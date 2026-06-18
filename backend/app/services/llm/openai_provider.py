@@ -5,6 +5,13 @@ from openai import AsyncOpenAI
 from app.core.config import settings
 from app.schemas.source import SourceItem
 from app.services.llm.base import LLMProvider
+from app.services.llm.language import (
+    Language,
+    detect_language,
+    language_instruction,
+    language_label,
+    no_sources_message,
+)
 
 _SYSTEM_PROMPT = """Eres SOFIA, un agente técnico especializado en el Reach Stacker TECPORT TRS4531.
 
@@ -14,13 +21,19 @@ Tu objetivo es ayudar a técnicos, operadores y personal de soporte a consultar 
 
 DEBES RESPONDER ÚNICAMENTE CON BASE EN EL CONTEXTO DOCUMENTAL RECUPERADO POR EL SISTEMA RAG.
 
+IDIOMA (PRIORIDAD ALTA):
+
+* Cada mensaje del usuario incluye una instrucción explícita de idioma de respuesta.
+* Responde SIEMPRE en ese idioma, aunque el contexto documental esté en español.
+* Traduce o adapta el contenido recuperado al idioma indicado sin alterar datos técnicos.
+* No mezcles idiomas en la misma respuesta.
+
 REGLAS OBLIGATORIAS:
 
 1. Usa solo la información incluida en el CONTEXTO proporcionado.
 2. No uses conocimiento externo.
 3. No inventes datos técnicos, capacidades, presiones, aceites, códigos de error, procedimientos, causas, piezas, intervalos de mantenimiento ni recomendaciones.
-4. Si el contexto no contiene la respuesta, responde exactamente:
-   "No encontré esa información en los documentos técnicos disponibles del TRS4531."
+4. Si el contexto no contiene la respuesta, usa el mensaje exacto indicado en la instrucción de idioma del mensaje del usuario.
 5. Si el contexto es parcial o insuficiente, dilo claramente y no completes la respuesta con suposiciones.
 6. Si hay varias fuentes recuperadas, usa primero la fuente más relevante para la pregunta.
 7. Si dos fuentes parecen contradecirse, menciona la diferencia y cita ambas fuentes.
@@ -33,7 +46,6 @@ REGLAS OBLIGATORIAS:
 
 ESTILO DE RESPUESTA:
 
-* Responde en español, salvo que el usuario pregunte en otro idioma.
 * Sé claro, directo y técnico.
 * Usa pasos numerados cuando expliques procedimientos.
 * Usa viñetas cuando expliques listas técnicas.
@@ -160,9 +172,20 @@ Si la consulta involucra riesgo para personas, carga, frenos, sistema hidráulic
 4. Recomienda detener el equipo si el documento lo indica.
 5. Nunca minimices una condición de riesgo."""
 
-_NO_SOURCES_RESPONSE = (
-    "No encontré esa información en los documentos técnicos disponibles del TRS4531."
-)
+def _build_user_message(
+    question: str, context: str, sources: List[SourceItem], lang: Language
+) -> str:
+    no_sources = no_sources_message(lang)
+    parts = [
+        f"[RESPONSE LANGUAGE: {language_label(lang)}]",
+        language_instruction(lang),
+        f'If the context does not contain the answer, respond EXACTLY with:\n"{no_sources}"',
+        f"User question: {question}",
+    ]
+    if context:
+        parts.append(context)
+    parts.append(f"Retrieved documentation excerpts:\n\n{_build_context(sources)}")
+    return "\n\n".join(parts)
 
 
 def _build_context(sources: List[SourceItem]) -> str:
@@ -182,13 +205,11 @@ class OpenAILLMProvider(LLMProvider):
     async def generate_response(
         self, question: str, context: str, sources: List[SourceItem]
     ) -> str:
+        lang = detect_language(question)
         if not sources:
-            return _NO_SOURCES_RESPONSE
+            return no_sources_message(lang)
 
-        user_message = f"Consulta del técnico: {question}\n\n"
-        if context:
-            user_message += f"{context}\n\n"
-        user_message += f"Fragmentos de documentación disponibles:\n\n{_build_context(sources)}"
+        user_message = _build_user_message(question, context, sources, lang)
 
         response = await self._client.chat.completions.create(
             model=settings.openai_chat_model,
