@@ -3,6 +3,7 @@ import ChatInput from '../components/Chat/ChatInput'
 import ChatWindow from '../components/Chat/ChatWindow'
 import TechnicianLayout from '../components/Layout/TechnicianLayout'
 import PdfModal from '../components/Modal/PdfModal'
+import { useChat } from '../context/ChatContext'
 import api from '../services/api'
 import perfilAgente from '../assets/agente/perfil-agente.webp'
 import homeAgente from '../assets/agente/home_agente.webp'
@@ -89,10 +90,9 @@ function SofiaPanel() {
 
 
 export default function TechnicianChatPage() {
-  const [messages, setMessages] = useState([])
+  const { messages, setMessages, sessionId, setSessionId } = useChat()
   const [question, setQuestion] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [sessionId, setSessionId] = useState(null)
   const [modalSource, setModalSource] = useState(null)
   const [error, setError] = useState('')
 
