@@ -16,8 +16,8 @@ _SUBSECTION_HEADER = re.compile(r"^###\s+", re.MULTILINE)
 MAX_SECTION_CHARS = 4000
 
 _PRIMARY_CODE_RE = re.compile(r"C[oó]digo principal:\s*(\S+)", re.IGNORECASE)
-_SPN_RE = re.compile(r"\bSPN:\s*(\d+)", re.IGNORECASE)
-_FMI_RE = re.compile(r"\bFMI:\s*(\d+)", re.IGNORECASE)
+_SPN_RE = re.compile(r"(?:J1939\s+)?SPN:\s*(\d+)", re.IGNORECASE)
+_FMI_RE = re.compile(r"(?:J1939\s+)?FMI:\s*(\d+)", re.IGNORECASE)
 
 
 def extract_fault_metadata(text: str) -> dict:

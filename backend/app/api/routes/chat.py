@@ -1,4 +1,5 @@
 from typing import List
+import logging
 
 from fastapi import APIRouter, Depends
 
@@ -10,6 +11,7 @@ from app.services.llm.factory import get_llm_provider
 from app.services.supabase_service import SupabaseService
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 _RAG_TOP_K            = 12
 _RAG_TOP_K_COMERCIAL  = 4   # slots para brochures en cada consulta
@@ -61,7 +63,7 @@ def _is_legacy_fault_pdf(document_name: str) -> bool:
 
 
 def _exact_fault_filter(fault_parsed) -> dict | None:
-    """Filtro Pinecone por código exacto o par SPN+FMI."""
+    """Filtro Pinecone por código exacto o par SPN+FMI (todos los subsistemas)."""
     if fault_parsed.is_ambiguous:
         return None
     base = {"doc_type": {"$eq": "fault_codes"}}
@@ -74,6 +76,46 @@ def _exact_fault_filter(fault_parsed) -> dict | None:
             "fmi": {"$eq": fault_parsed.fmi},
         }
     return None
+
+
+def _subsystem_fault_filter(fault_code: str, subsystem: str) -> dict:
+    return {
+        "doc_type": {"$eq": "fault_codes"},
+        "fault_code": {"$eq": fault_code},
+        "subsystem": {"$eq": subsystem},
+    }
+
+
+def _log_fault_retrieval(fault_parsed, label: str, results: list) -> None:
+    if settings.environment != "development":
+        return
+    logger.info(
+        "FAULT_RAG [%s] code=%s spn=%s fmi=%s hits=%d",
+        label,
+        fault_parsed.primary_code,
+        fault_parsed.spn,
+        fault_parsed.fmi,
+        len(results),
+    )
+    for i, s in enumerate(results[:8], 1):
+        logger.info(
+            "  #%d score=%.4f doc=%s sys=%s sub=%s fc=%s page=%s",
+            i, s.score, s.document_name, s.system, s.subsystem,
+            s.fault_code, s.page,
+        )
+
+
+def _entry_to_source(entry: dict) -> SourceItem:
+    return SourceItem(
+        document_name=entry["document_name"],
+        page=entry["page"],
+        score=1.0,
+        snippet=entry["snippet"],
+        chunk_index=entry.get("chunk_index"),
+        fault_code=entry.get("fault_code"),
+        system=entry.get("system"),
+        subsystem=entry.get("subsystem"),
+    )
 
 
 def _is_spec_question(question: str) -> bool:
@@ -104,6 +146,12 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
         build_ambiguity_context,
         parse_fault_code_query,
     )
+    from app.services.fault_codes_service import (
+        buscar_codigo_falla,
+        formatear_contexto_falla,
+        infer_subsystem_hints,
+        snippet_contains_code,
+    )
     from app.services.pinecone_service import PineconeService
 
     embedder = get_embedding_provider()
@@ -113,6 +161,15 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     structured_fault = ""
     if fault_parsed.is_ambiguous:
         structured_fault = build_ambiguity_context(fault_parsed)
+
+    if settings.environment == "development" and fault_parsed.is_fault_question:
+        logger.info(
+            "FAULT_PARSE code=%s spn=%s fmi=%s ambiguous=%s",
+            fault_parsed.primary_code,
+            fault_parsed.spn,
+            fault_parsed.fmi,
+            fault_parsed.is_ambiguous,
+        )
 
     search_question = fault_parsed.search_text or question
     embedding = await embedder.embed(search_question)
@@ -132,37 +189,68 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
                     s.score = round(s.score + boost, 4)
                 sources.append(s)
 
-    # ── 2. Búsqueda EXACTA + prioridad códigos de falla ─────────────────────
     exact_md_hits = False
+    code = fault_parsed.primary_code
+
+    # ── 2. Búsqueda EXACTA + prioridad códigos de falla (3 subsistemas) ───────
     if fault_parsed.is_fault_question and not fault_parsed.is_ambiguous:
         exact_filter = _exact_fault_filter(fault_parsed)
         if exact_filter:
+            if settings.environment == "development":
+                logger.info("FAULT_FILTER exact=%s", exact_filter)
+
             exact = await pinecone.search(
-                embedding,
-                top_k=5,
-                namespace=_NS_TECNICO,
-                filter=exact_filter,
+                embedding, top_k=8, namespace=_NS_TECNICO, filter=exact_filter,
             )
+            _log_fault_retrieval(fault_parsed, "exact-all", exact)
             for s in exact:
                 s.score = 0.99
                 if s.document_name.endswith(".md"):
                     exact_md_hits = True
             _merge(exact)
 
+            # Búsqueda por subsistema probable (sin excluir otros sistemas).
+            if code and not exact:
+                for subsystem in infer_subsystem_hints(code):
+                    sub_filter = _subsystem_fault_filter(code, subsystem)
+                    sub_hits = await pinecone.search(
+                        embedding, top_k=3, namespace=_NS_TECNICO, filter=sub_filter,
+                    )
+                    _log_fault_retrieval(fault_parsed, f"subsystem-{subsystem}", sub_hits)
+                    for s in sub_hits:
+                        s.score = 0.98
+                        if s.document_name.endswith(".md"):
+                            exact_md_hits = True
+                    _merge(sub_hits)
+
         fault_emb = await embedder.embed(search_question)
-        _merge(await pinecone.search(
-            fault_emb,
-            top_k=10,
-            namespace=_NS_TECNICO,
-            filter=_FAULT_CODES_FILTER,
-        ), boost=0.15)
+        semantic_fault = await pinecone.search(
+            fault_emb, top_k=15, namespace=_NS_TECNICO, filter=_FAULT_CODES_FILTER,
+        )
+        _log_fault_retrieval(fault_parsed, "semantic-fault_codes", semantic_fault)
+        _merge(semantic_fault, boost=0.15)
 
         _merge(await pinecone.search(
-            embedding,
-            top_k=6,
-            namespace=_NS_TECNICO,
-            filter=_FAULT_CODES_FILTER,
+            embedding, top_k=10, namespace=_NS_TECNICO, filter=_FAULT_CODES_FILTER,
         ), boost=0.10)
+
+        # Fallback local: ficha exacta desde Markdown si Pinecone no la trajo.
+        if code and not any(snippet_contains_code(s.snippet, code) for s in sources):
+            local = buscar_codigo_falla(code)
+            if local:
+                if settings.environment == "development":
+                    logger.info(
+                        "FAULT_LOCAL_HIT code=%s doc=%s subsystem=%s",
+                        code, local["document_name"], local["subsystem"],
+                    )
+                src = _entry_to_source(local)
+                _merge([src])
+                exact_md_hits = True
+                structured_fault = (
+                    f"{structured_fault}\n\n{formatear_contexto_falla(local)}"
+                    if structured_fault
+                    else formatear_contexto_falla(local)
+                )
 
     # ── 3. Reformulación con sinónimos técnicos ("marca" → "fabricante modelo")
     alt_text = _synonym_query(question)

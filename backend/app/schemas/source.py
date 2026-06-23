@@ -9,3 +9,6 @@ class SourceItem(BaseModel):
     snippet: str
     chunk_index: Optional[int] = None
     page_image_url: Optional[str] = None
+    fault_code: Optional[str] = None
+    system: Optional[str] = None
+    subsystem: Optional[str] = None

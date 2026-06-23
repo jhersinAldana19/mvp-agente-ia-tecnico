@@ -36,6 +36,9 @@ class PineconeService:
                 snippet=m.metadata.get("snippet", ""),
                 chunk_index=m.metadata.get("chunk_index"),
                 page_image_url=m.metadata.get("page_image_url"),
+                fault_code=m.metadata.get("fault_code"),
+                system=m.metadata.get("system"),
+                subsystem=m.metadata.get("subsystem"),
             )
             for m in results.matches
         ]

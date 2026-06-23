@@ -21,9 +21,15 @@ class TestExtractFaultMetadata(unittest.TestCase):
         self.assertEqual(meta["fmi"], "1")
 
     def test_alnum_code_uppercase(self):
-        text = "Código principal: 3c.02\nSPN: 520218\nFMI: 2"
-        meta = extract_fault_metadata(text)
+        meta = extract_fault_metadata("Código principal: 3c.02\nSPN: 520218\nFMI: 2")
         self.assertEqual(meta["fault_code"], "3C.02")
+
+    def test_j1939_spn_fmi(self):
+        text = "Código principal: 111\nJ1939 SPN: 629\nJ1939 FMI: 12"
+        meta = extract_fault_metadata(text)
+        self.assertEqual(meta["fault_code"], "111")
+        self.assertEqual(meta["spn"], "629")
+        self.assertEqual(meta["fmi"], "12")
 
 
 if __name__ == "__main__":
