@@ -23,19 +23,50 @@ _LANGUAGE_LABELS: dict[Language, str] = {
 _MARKERS: dict[Language, tuple[tuple[str, int], ...]] = {
     "es": (
         (r"\b(qué|que|cómo|como|cuál|cual|cuánto|cuanto|dónde|donde|tiene|lleva|usa|frenos|aceite|llanta|mantenimiento|seguridad|motor|transmisión|transmision|especificaciones)\b", 2),
-        (r"[¿¡]", 3),
+        (r"\b(codigo|código|falla|alarma|significa|dime|error)\b", 2),
+        (r"[¿¡áéíóúüñ]", 3),
         (r"\b(el|la|los|las|del|al|un|una|este|esta|para|con|por)\b", 1),
     ),
     "en": (
-        (r"\b(what|how|which|where|when|why|does|do|is|are|the|engine|model|maintenance|brake|oil|tire|safety|use|has|have|specification|capacity|power)\b", 2),
+        (r"\b(what|how|which|where|when|why|does|do|is|are|the|engine|model|maintenance|brake|oil|tire|safety|use|has|have|specification|capacity|power|mean|means)\b", 2),
+        (r"\b(fault code|error code|what is|what does)\b", 3),
         (r"\b(the|this|that|with|from|for|about)\b", 1),
     ),
     "pt": (
         (r"\b(qual|quais|como|onde|quando|por que|porque|possui|usa|freio|óleo|oleo|pneu|manutenção|manutencao|segurança|seguranca|motor|transmissão|transmissao|especificação|especificacao|capacidade|potência|potencia)\b", 2),
+        (r"\b(codigo de erro|codigo de falha|o codigo|o código|erro|falha)\b", 2),
         (r"\b(não|nao|você|voce|também|tambem|este|esta|para|com|por)\b", 1),
         (r"[ãõç]", 3),
     ),
 }
+
+# Spanish without accents — common in quick technical queries.
+_ES_PLAIN = re.compile(
+    r"\b("
+    r"codigo|código|falla|alarma|significa|dime|"
+    r"que es|que significa|de error|de falla|el error|el codigo|el código"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Portuguese without accents.
+_PT_PLAIN = re.compile(
+    r"\b("
+    r"codigo de erro|codigo de falha|o codigo|o código|"
+    r"qual e|qual é"
+    r")\b",
+    re.IGNORECASE,
+)
+
+# Clear English phrasing (avoid matching bare "error" shared with Spanish).
+_EN_STRONG = re.compile(
+    r"\b("
+    r"what|how|which|where|when|why|does|did|"
+    r"fault code|error code|what is|what does|what's|"
+    r"the engine|tell me|can you|please explain"
+    r")\b",
+    re.IGNORECASE,
+)
 
 
 def detect_language(text: str) -> Language:
@@ -43,24 +74,32 @@ def detect_language(text: str) -> Language:
     if not q:
         return "es"
 
-    # Strong exclusive signals first.
+    # Portuguese exclusive (diacritics or unmistakable PT words).
     if re.search(r"[ãõç]", q) or re.search(
-        r"\b(qual|quais|não|nao|você|voce|manutenção|manutencao|possui|freio|óleo|oleo|pneu)\b",
+        r"\b(qual|quais|não|nao|você|voce|manutenção|manutencao|possui|freio|óleo|oleo|pneu|o que)\b",
         q,
         re.IGNORECASE,
     ):
         return "pt"
-    if re.search(
-        r"\b(what|how|which|where|when|why|does|do|did|is|are|the|engine|maintenance)\b",
-        q,
-        re.IGNORECASE,
-    ):
+
+    # English exclusive — must be unambiguous English phrasing.
+    if _EN_STRONG.search(q):
         return "en"
-    if re.search(r"[¿¡]", q) or re.search(
+
+    # Portuguese without accents — before Spanish (shared "codigo").
+    if _PT_PLAIN.search(q):
+        return "pt"
+
+    # Spanish with accents or unmistakable Spanish words.
+    if re.search(r"[¿¡áéíóúüñ]", q) or re.search(
         r"\b(qué|cómo|cuál|cuánto|dónde|tiene|mantenimiento)\b",
         q,
         re.IGNORECASE,
     ):
+        return "es"
+
+    # Spanish without accents (e.g. "codigo error 85.00").
+    if _ES_PLAIN.search(q):
         return "es"
 
     scores = {lang: 0 for lang in _MARKERS}
@@ -71,8 +110,8 @@ def detect_language(text: str) -> Language:
 
     best = max(scores, key=scores.get)
     if scores[best] == 0:
-        ascii_ratio = sum(1 for c in q if ord(c) < 128) / len(q)
-        return "en" if ascii_ratio > 0.95 and re.search(r"\b[a-z]{3,}\b", q) else "es"
+        # Default español — no inferir inglés solo por texto ASCII.
+        return "es"
     return best  # type: ignore[return-value]
 
 
@@ -89,20 +128,23 @@ def language_instruction(lang: Language) -> str:
         "es": (
             "Redacta TODA la respuesta en español, incluyendo los encabezados de sección "
             '("Respuesta:", "Puntos importantes:", "Fuente:"). '
-            "Los fragmentos recuperados pueden estar en español: interprétalos y responde en español "
-            "sin cambiar valores técnicos, unidades ni nombres de componentes."
+            "Los fragmentos recuperados pueden estar en español o inglés: tradúcelos fielmente "
+            "al español sin cambiar valores técnicos, unidades, códigos ni nombres de componentes. "
+            "No inventes información al traducir."
         ),
         "en": (
             "Write the ENTIRE response in English, including section headers "
             '("Answer:", "Key points:", "Source:"). '
-            "Retrieved excerpts may be in Spanish: interpret them and answer in English "
-            "without changing technical values, units, or component names."
+            "Retrieved excerpts may be in Spanish or English: translate them faithfully "
+            "into English without changing technical values, units, codes, or component names. "
+            "Do not invent information when translating."
         ),
         "pt": (
             "Redija TODA a resposta em português, incluindo os títulos das seções "
             '("Resposta:", "Pontos importantes:", "Fonte:"). '
-            "Os trechos recuperados podem estar em espanhol: interprete-os e responda em português "
-            "sem alterar valores técnicos, unidades ou nomes de componentes."
+            "Os trechos recuperados podem estar em espanhol ou inglês: traduza-os fielmente "
+            "para português sem alterar valores técnicos, unidades, códigos ou nomes de componentes. "
+            "Não invente informação ao traduzir."
         ),
     }
     return instructions[lang]
