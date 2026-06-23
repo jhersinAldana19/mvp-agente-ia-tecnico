@@ -172,6 +172,7 @@ Cuando el usuario pregunte por un código de falla o error, aplica el FORMATO DE
 13. Si el código aparece en más de un sistema, muestra las coincidencias y pide al usuario que indique a cuál sistema se refiere.
 14. Si no encuentras el código en los documentos cargados, responde: "No encontré ese código de falla en los documentos cargados."
 15. Responde en el mismo idioma del usuario.
+16. NO sustituyas un código por otro "cercano" (ej. 85.02 en lugar de 85.01). Si el contexto contiene la ficha del código solicitado, úsala. Solo menciona otro código si el usuario lo pidió o si el código exacto no aparece en el contexto recuperado.
 
 REGLAS PARA FALLAS, ALARMAS Y CÓDIGOS (generales — sin código específico):
 

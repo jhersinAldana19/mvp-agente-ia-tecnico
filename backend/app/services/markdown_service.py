@@ -15,6 +15,29 @@ _SUBSECTION_HEADER = re.compile(r"^###\s+", re.MULTILINE)
 
 MAX_SECTION_CHARS = 4000
 
+_PRIMARY_CODE_RE = re.compile(r"C[oó]digo principal:\s*(\S+)", re.IGNORECASE)
+_SPN_RE = re.compile(r"\bSPN:\s*(\d+)", re.IGNORECASE)
+_FMI_RE = re.compile(r"\bFMI:\s*(\d+)", re.IGNORECASE)
+
+
+def extract_fault_metadata(text: str) -> dict:
+    """Extrae fault_code, spn y fmi de una ficha Markdown."""
+    meta: dict = {}
+    if m := _PRIMARY_CODE_RE.search(text):
+        code = m.group(1).strip()
+        meta["fault_code"] = code.upper() if re.search(r"[A-Fa-f]", code) else code
+    if m := _SPN_RE.search(text):
+        meta["spn"] = m.group(1)
+    if m := _FMI_RE.search(text):
+        meta["fmi"] = m.group(1)
+    return meta
+
+
+def build_embedding_text(chunk_text: str, fault_code: str | None, subsystem: str) -> str:
+    """Prefijo searchable para mejorar recuperación semántica por código exacto."""
+    prefix = f"TRS4531 fault code {fault_code} {subsystem}" if fault_code else f"TRS4531 fault code {subsystem}"
+    return f"{prefix}\n{chunk_text}"
+
 
 @dataclass
 class MarkdownChunk:

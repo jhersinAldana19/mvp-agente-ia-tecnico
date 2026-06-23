@@ -70,6 +70,17 @@ async def main() -> None:
     parsed = parse_fault_code_query(query)
     search_text = parsed.search_text or query
     metadata_filter = FAULT_FILTER if args.fault_codes else None
+    if args.fault_codes and parsed.primary_code:
+        metadata_filter = {
+            "doc_type": {"$eq": "fault_codes"},
+            "fault_code": {"$eq": parsed.primary_code},
+        }
+    elif args.fault_codes and parsed.spn and parsed.fmi:
+        metadata_filter = {
+            "doc_type": {"$eq": "fault_codes"},
+            "spn": {"$eq": parsed.spn},
+            "fmi": {"$eq": parsed.fmi},
+        }
 
     print("=" * 60)
     print("TECPORT AI — Test de Búsqueda Semántica")

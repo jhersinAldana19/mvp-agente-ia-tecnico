@@ -33,7 +33,12 @@ load_dotenv()
 
 from app.core.config import settings
 from app.services.embeddings.openai_embeddings import OpenAIEmbeddingProvider
-from app.services.markdown_service import MarkdownChunk, MarkdownService
+from app.services.markdown_service import (
+    MarkdownChunk,
+    MarkdownService,
+    build_embedding_text,
+    extract_fault_metadata,
+)
 
 DOCUMENTS_DIR  = Path(__file__).resolve().parent.parent / "documents"
 EMBED_BATCH    = 50
@@ -88,16 +93,19 @@ def _file_metadata(document_name: str) -> dict:
 
 def _build_vector(chunk: MarkdownChunk, embedding: List[float]) -> dict:
     meta = _file_metadata(chunk.document_name)
+    fault_meta = extract_fault_metadata(chunk.text)
+    metadata = {
+        **meta,
+        **fault_meta,
+        "document_name": chunk.document_name,
+        "page":          chunk.section,
+        "chunk_index":   chunk.chunk_index,
+        "snippet":       chunk.text,
+    }
     return {
         "id": f"{_safe_id(chunk.document_name)}-s{chunk.section}-c{chunk.chunk_index}",
         "values": embedding,
-        "metadata": {
-            **meta,
-            "document_name": chunk.document_name,
-            "page":          chunk.section,
-            "chunk_index":   chunk.chunk_index,
-            "snippet":       chunk.text,
-        },
+        "metadata": metadata,
     }
 
 
@@ -113,7 +121,14 @@ async def _embed_chunks(
         end_idx = min(i + EMBED_BATCH, total)
         print(f"      Embeddings {i + 1:>4}–{end_idx:>4} / {total}…")
 
-        embeddings = await embedder.embed_batch([c.text for c in batch])
+        embeddings = await embedder.embed_batch([
+            build_embedding_text(
+                c.text,
+                extract_fault_metadata(c.text).get("fault_code"),
+                _file_metadata(c.document_name).get("subsystem", ""),
+            )
+            for c in batch
+        ])
         vectors.extend(_build_vector(c, emb) for c, emb in zip(batch, embeddings))
 
         if end_idx < total:

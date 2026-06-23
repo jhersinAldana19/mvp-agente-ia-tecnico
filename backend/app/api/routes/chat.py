@@ -54,6 +54,28 @@ _LUBRICACION_WORDS = frozenset({
 _FAULT_CODES_FILTER = {"doc_type": {"$eq": "fault_codes"}}
 
 
+def _is_legacy_fault_pdf(document_name: str) -> bool:
+    """PDFs antiguos de códigos de falla (pre-Markdown) que compiten con las fichas .md."""
+    n = document_name.lower()
+    return n.endswith(".pdf") and "codigos de error" in n
+
+
+def _exact_fault_filter(fault_parsed) -> dict | None:
+    """Filtro Pinecone por código exacto o par SPN+FMI."""
+    if fault_parsed.is_ambiguous:
+        return None
+    base = {"doc_type": {"$eq": "fault_codes"}}
+    if fault_parsed.primary_code:
+        return {**base, "fault_code": {"$eq": fault_parsed.primary_code}}
+    if fault_parsed.spn and fault_parsed.fmi:
+        return {
+            **base,
+            "spn": {"$eq": fault_parsed.spn},
+            "fmi": {"$eq": fault_parsed.fmi},
+        }
+    return None
+
+
 def _is_spec_question(question: str) -> bool:
     """True si la pregunta es sobre especificaciones técnicas del equipo."""
     q = question.lower()
@@ -110,8 +132,23 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
                     s.score = round(s.score + boost, 4)
                 sources.append(s)
 
-    # ── 2. Prioridad códigos de falla ───────────────────────────────────────
+    # ── 2. Búsqueda EXACTA + prioridad códigos de falla ─────────────────────
+    exact_md_hits = False
     if fault_parsed.is_fault_question and not fault_parsed.is_ambiguous:
+        exact_filter = _exact_fault_filter(fault_parsed)
+        if exact_filter:
+            exact = await pinecone.search(
+                embedding,
+                top_k=5,
+                namespace=_NS_TECNICO,
+                filter=exact_filter,
+            )
+            for s in exact:
+                s.score = 0.99
+                if s.document_name.endswith(".md"):
+                    exact_md_hits = True
+            _merge(exact)
+
         fault_emb = await embedder.embed(search_question)
         _merge(await pinecone.search(
             fault_emb,
@@ -159,6 +196,11 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     ))
 
     sources.sort(key=lambda x: x.score, reverse=True)
+
+    # Si hay ficha Markdown exacta, excluir PDFs legacy de códigos de falla.
+    if exact_md_hits:
+        sources = [s for s in sources if not _is_legacy_fault_pdf(s.document_name)]
+
     return sources[:_RAG_TOP_K], structured_fault
 
 
