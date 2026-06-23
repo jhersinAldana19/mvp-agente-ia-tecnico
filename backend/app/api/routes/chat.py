@@ -51,6 +51,8 @@ _LUBRICACION_WORDS = frozenset({
     "nota 5", "nota 8", "nota 9", "nota 10", "nota 13",
 })
 
+_FAULT_CODES_FILTER = {"doc_type": {"$eq": "fault_codes"}}
+
 
 def _is_spec_question(question: str) -> bool:
     """True si la pregunta es sobre especificaciones técnicas del equipo."""
@@ -76,12 +78,22 @@ def _synonym_query(question: str) -> str | None:
 async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     """Búsqueda multi-namespace: manuales técnicos + brochures comerciales."""
     from app.services.embeddings.factory import get_embedding_provider
+    from app.services.fault_code_parser import (
+        build_ambiguity_context,
+        parse_fault_code_query,
+    )
     from app.services.pinecone_service import PineconeService
 
     embedder = get_embedding_provider()
     pinecone  = PineconeService()
 
-    embedding = await embedder.embed(question)
+    fault_parsed = parse_fault_code_query(question)
+    structured_fault = ""
+    if fault_parsed.is_ambiguous:
+        structured_fault = build_ambiguity_context(fault_parsed)
+
+    search_question = fault_parsed.search_text or question
+    embedding = await embedder.embed(search_question)
 
     # ── 1. Búsqueda principal en manuales técnicos ───────────────────────────
     sources = await pinecone.search(
@@ -89,14 +101,33 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     )
     seen = {(s.document_name, s.page, s.chunk_index) for s in sources}
 
-    def _merge(extra: list) -> None:
+    def _merge(extra: list, boost: float = 0.0) -> None:
         for s in extra:
             key = (s.document_name, s.page, s.chunk_index)
             if key not in seen:
                 seen.add(key)
+                if boost:
+                    s.score = round(s.score + boost, 4)
                 sources.append(s)
 
-    # ── 2. Reformulación con sinónimos técnicos ("marca" → "fabricante modelo")
+    # ── 2. Prioridad códigos de falla ───────────────────────────────────────
+    if fault_parsed.is_fault_question and not fault_parsed.is_ambiguous:
+        fault_emb = await embedder.embed(search_question)
+        _merge(await pinecone.search(
+            fault_emb,
+            top_k=10,
+            namespace=_NS_TECNICO,
+            filter=_FAULT_CODES_FILTER,
+        ), boost=0.15)
+
+        _merge(await pinecone.search(
+            embedding,
+            top_k=6,
+            namespace=_NS_TECNICO,
+            filter=_FAULT_CODES_FILTER,
+        ), boost=0.10)
+
+    # ── 3. Reformulación con sinónimos técnicos ("marca" → "fabricante modelo")
     alt_text = _synonym_query(question)
     if alt_text:
         alt_emb = await embedder.embed(alt_text)
@@ -104,8 +135,7 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
             alt_emb, top_k=_RAG_TOP_K // 2, namespace=_NS_TECNICO,
         ))
 
-    # ── 3. Refuerzo cap7 para preguntas de lubricación/aceites ───────────────
-    # Garantiza que las tablas de lubricantes y sus notas lleguen al contexto.
+    # ── 4. Refuerzo cap7 para preguntas de lubricación/aceites ───────────────
     if _is_lubricacion_question(question):
         _merge(await pinecone.search(
             embedding,
@@ -114,7 +144,7 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
             filter={"document_name": {"$eq": _LUBRICACION_DOC}},
         ))
 
-    # ── 4. Refuerzo cap9 para preguntas de especificaciones ──────────────────
+    # ── 5. Refuerzo cap9 para preguntas de especificaciones ──────────────────
     if _is_spec_question(question):
         _merge(await pinecone.search(
             embedding,
@@ -123,13 +153,13 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
             filter={"document_name": {"$eq": _SPECS_DOC}},
         ))
 
-    # ── 5. Búsqueda en brochures comerciales (siempre) ───────────────────────
+    # ── 6. Búsqueda en brochures comerciales (siempre) ───────────────────────
     _merge(await pinecone.search(
         embedding, top_k=_RAG_TOP_K_COMERCIAL, namespace=_NS_COMERCIAL,
     ))
 
     sources.sort(key=lambda x: x.score, reverse=True)
-    return sources[:_RAG_TOP_K], ""
+    return sources[:_RAG_TOP_K], structured_fault
 
 
 @router.post("", response_model=ChatResponse)
@@ -149,7 +179,9 @@ async def send_message(
         from app.services.lubricantes_service import buscar_sistema, formatear_contexto
         sistema = buscar_sistema(payload.question)
         structured = formatear_contexto(sistema) if sistema else ""
-        sources, _ = await _retrieve_sources(payload.question)
+        sources, fault_context = await _retrieve_sources(payload.question)
+        if fault_context:
+            structured = f"{structured}\n\n{fault_context}".strip() if structured else fault_context
 
     answer = await llm.generate_response(payload.question, structured, sources)
 

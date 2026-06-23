@@ -14,8 +14,15 @@ Uso:
     # Consulta personalizada:
     python scripts/test_search.py ¿Cómo realizar el mantenimiento diario?
     python scripts/test_search.py "¿Cuál es la capacidad de carga máxima?"
+
+    # Solo códigos de falla (doc_type=fault_codes):
+    python scripts/test_search.py --fault-codes "Código de error 1607"
+
+    # Namespace personalizado:
+    python scripts/test_search.py --namespace trs4531 "código de falla 85.01"
 """
 
+import argparse
 import asyncio
 import sys
 from pathlib import Path
@@ -27,12 +34,13 @@ load_dotenv()
 
 from app.core.config import settings
 from app.services.embeddings.openai_embeddings import OpenAIEmbeddingProvider
+from app.services.fault_code_parser import parse_fault_code_query
 from app.services.pinecone_service import PineconeService
-
 
 DEFAULT_QUERY = "¿Qué maniobras puedo hacer con el joystick del TRS4531?"
 TOP_K         = 15
 SNIPPET_CHARS = 280
+FAULT_FILTER  = {"doc_type": {"$eq": "fault_codes"}}
 
 
 def _check_config() -> bool:
@@ -47,13 +55,34 @@ def _check_config() -> bool:
 
 
 async def main() -> None:
-    query = " ".join(sys.argv[1:]).strip() if len(sys.argv) > 1 else DEFAULT_QUERY
+    parser = argparse.ArgumentParser(description="Test de búsqueda semántica en Pinecone.")
+    parser.add_argument("query", nargs="*", help="Consulta de búsqueda.")
+    parser.add_argument("--namespace", default=None, help="Namespace Pinecone.")
+    parser.add_argument(
+        "--fault-codes",
+        action="store_true",
+        help="Filtrar solo doc_type=fault_codes.",
+    )
+    args = parser.parse_args()
+
+    query = " ".join(args.query).strip() if args.query else DEFAULT_QUERY
+    namespace = args.namespace or settings.pinecone_namespace
+    parsed = parse_fault_code_query(query)
+    search_text = parsed.search_text or query
+    metadata_filter = FAULT_FILTER if args.fault_codes else None
 
     print("=" * 60)
     print("TECPORT AI — Test de Búsqueda Semántica")
     print("=" * 60)
     print(f"Consulta : {query}")
-    print(f"Índice   : {settings.pinecone_index_name}/{settings.pinecone_namespace}")
+    if search_text != query:
+        print(f"Búsqueda : {search_text}")
+    if parsed.is_fault_question:
+        print(f"Tipo     : consulta de código de falla"
+              f"{' (ambigua)' if parsed.is_ambiguous else ''}")
+    print(f"Índice   : {settings.pinecone_index_name}/{namespace}")
+    if metadata_filter:
+        print(f"Filtro   : {metadata_filter}")
     print(f"Top-K    : {TOP_K}")
     print("-" * 60)
 
@@ -61,20 +90,27 @@ async def main() -> None:
         return
 
     print("\nGenerando embedding de la consulta…")
-    embedding = await OpenAIEmbeddingProvider().embed(query)
+    embedding = await OpenAIEmbeddingProvider().embed(search_text)
 
     print("Buscando en Pinecone…\n")
-    results = await PineconeService().search(embedding, top_k=TOP_K)
+    results = await PineconeService().search(
+        embedding,
+        top_k=TOP_K,
+        namespace=namespace,
+        filter=metadata_filter,
+    )
 
     if not results:
         print("Sin resultados.")
-        print("\n¿Se ejecutó la ingesta?  →  python scripts/ingest_pdfs.py")
+        print("\n¿Se ejecutó la ingesta?")
+        print("  Manuales PDF  →  python scripts/ingest_pdfs.py --dir manuales/trs4531 --namespace trs4531")
+        print("  Códigos falla →  python scripts/ingest_markdown.py")
         return
 
     for i, r in enumerate(results, 1):
         snippet = r.snippet.replace("\n", " ")[:SNIPPET_CHARS]
         print(f"[{i}] {r.document_name}")
-        print(f"     Página : {r.page}")
+        print(f"     Sección: {r.page}")
         print(f"     Score  : {r.score:.4f}")
         print(f"     Snippet: {snippet}…")
         print()
