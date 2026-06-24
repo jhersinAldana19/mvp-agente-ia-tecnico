@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink } from 'react-router-dom'
+import { Button } from 'primereact/button'
 import { useAuth } from '../../context/AuthContext'
+import { useSignOutRequest } from '../../context/SignOutDialogContext'
 import logoTecport from '../../assets/branding/logo-tecport.png'
 
 const NAV_ITEMS = [
@@ -56,14 +58,9 @@ export default function TechnicianLayout({
   maxWidth = '4xl',
   bgImage = null,
 }) {
-  const { profile, signOut } = useAuth()
-  const navigate = useNavigate()
+  const { profile } = useAuth()
+  const requestSignOut = useSignOutRequest()
   const widthClass = fullWidth ? MAX_WIDTH_CLASS.full : (MAX_WIDTH_CLASS[maxWidth] || MAX_WIDTH_CLASS['4xl'])
-
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
-  }
 
   return (
     <div className="min-h-screen flex flex-col bg-surface">
@@ -94,18 +91,16 @@ export default function TechnicianLayout({
             {/* Avatar (→ perfil) + logout */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <UserChip profile={profile} />
-              <button
-                onClick={handleSignOut}
-                className="text-text-muted hover:text-text-main p-2 rounded-lg
-                           hover:bg-surface transition-colors"
+              <Button
+                type="button"
+                icon="pi pi-sign-out"
+                rounded
+                text
+                severity="secondary"
                 aria-label="Cerrar sesión"
                 title="Cerrar sesión"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8}
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-                </svg>
-              </button>
+                onClick={requestSignOut}
+              />
             </div>
 
           </div>

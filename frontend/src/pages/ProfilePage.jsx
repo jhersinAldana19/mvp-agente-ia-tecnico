@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Button } from 'primereact/button'
 import TechnicianLayout from '../components/Layout/TechnicianLayout'
 import { useAuth } from '../context/AuthContext'
+import { useSignOutRequest } from '../context/SignOutDialogContext'
 import { supabase } from '../services/supabaseClient'
 import api from '../services/api'
 import Spinner from '../components/UI/Spinner'
@@ -36,9 +37,9 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const MAX_SIZE_MB   = 2
 
 export default function ProfilePage() {
-  const { profile, session, signOut, refreshProfile } = useAuth()
-  const navigate   = useNavigate()
-  const fileRef    = useRef(null)
+  const { profile, session, refreshProfile } = useAuth()
+  const requestSignOut = useSignOutRequest()
+  const fileRef = useRef(null)
 
   const [uploading, setUploading]         = useState(false)
   const [uploadError, setUploadError]     = useState('')
@@ -49,11 +50,6 @@ export default function ProfilePage() {
   const [nameValue, setNameValue]       = useState('')
   const [savingName, setSavingName]     = useState(false)
   const [nameError, setNameError]       = useState('')
-
-  const handleSignOut = async () => {
-    await signOut()
-    navigate('/')
-  }
 
   const startEditName = () => {
     setNameValue(profile.full_name === 'Sin nombre' ? '' : profile.full_name)
@@ -278,19 +274,15 @@ export default function ProfilePage() {
         </div>
 
         {/* Cerrar sesión */}
-        <button
-          onClick={handleSignOut}
-          className="w-full flex items-center justify-center gap-2 py-2.5 px-4
-                     border border-border rounded-lg text-sm text-text-muted
-                     hover:bg-surface hover:text-text-main transition-colors"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-              d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2
-                 V7a2 2 0 012-2h6a2 2 0 012 2v1" />
-          </svg>
-          Cerrar sesión
-        </button>
+        <Button
+          type="button"
+          label="Cerrar sesión"
+          icon="pi pi-sign-out"
+          outlined
+          severity="secondary"
+          className="w-full"
+          onClick={requestSignOut}
+        />
 
       </div>
     </TechnicianLayout>

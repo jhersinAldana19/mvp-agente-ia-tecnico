@@ -15,7 +15,7 @@ export default {
         'text-muted': '#6B7280',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['VistraSans', 'system-ui', 'sans-serif'],
       },
     },
   },
