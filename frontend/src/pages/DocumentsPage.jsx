@@ -185,8 +185,16 @@ function PdfViewer({ file, onBack }) {
       if (prevUrl.current) URL.revokeObjectURL(prevUrl.current)
       prevUrl.current = url
       setBlobUrl(url)
-    } catch {
-      setError('No se pudo cargar el documento.')
+    } catch (err) {
+      const status = err?.response?.status
+      if (status === 404) {
+        setError(
+          'El PDF no está disponible en el servidor. Si acabas de agregarlo, '
+          + 'confirma que fue desplegado en Render (carpeta backend/documents/codigos-de-fallas/trs4531/pdf/).'
+        )
+      } else {
+        setError(err?.message || 'No se pudo cargar el documento.')
+      }
     } finally {
       setLoading(false)
     }

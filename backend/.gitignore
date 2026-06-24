@@ -1,6 +1,10 @@
 venv/
 .venv/
-documents/
+# Manuales/comercial y .md de códigos de falla: solo local (no versionar).
+documents/manuales/
+documents/comercial/
+documents/codigos-de-fallas/trs4531/*.md
+# Los PDF de códigos de falla SÍ se versionan para la página Documentos en Render.
 __pycache__/
 *.pyc
 *.pyo
