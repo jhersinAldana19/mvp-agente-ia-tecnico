@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Avatar } from 'primereact/avatar'
 import { Button } from 'primereact/button'
-import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog'
+import { Dialog } from 'primereact/dialog'
 import { Sidebar } from 'primereact/sidebar'
 import { Toolbar } from 'primereact/toolbar'
 import { useAuth } from '../../context/AuthContext'
@@ -30,25 +30,32 @@ export default function AdminLayout({ children }) {
   const { profile, signOut } = useAuth()
   const navigate = useNavigate()
   const [avatarBroken, setAvatarBroken] = useState(false)
+  const [signOutVisible, setSignOutVisible] = useState(false)
 
   const handleSignOut = async () => {
+    setSignOutVisible(false)
     await signOut()
     navigate('/')
   }
 
-  const requestSignOut = () => {
-    confirmDialog({
-      message: '¿Estás seguro de que deseas cerrar sesión?',
-      header: 'Cerrar sesión',
-      icon: 'pi pi-sign-out',
-      defaultFocus: 'reject',
-      acceptLabel: 'Sí, cerrar sesión',
-      rejectLabel: 'Cancelar',
-      acceptClassName: 'admin-btn-primary',
-      rejectClassName: 'admin-btn-secondary',
-      accept: handleSignOut,
-    })
-  }
+  const requestSignOut = () => setSignOutVisible(true)
+
+  const signOutFooter = (
+    <div className="flex flex-wrap justify-end gap-3">
+      <Button
+        type="button"
+        label="Cancelar"
+        severity="secondary"
+        onClick={() => setSignOutVisible(false)}
+      />
+      <Button
+        type="button"
+        label="Sí, cerrar sesión"
+        className="admin-btn-primary"
+        onClick={handleSignOut}
+      />
+    </div>
+  )
 
   const profileName = profile?.full_name || ''
   const hasAvatar = profile?.avatar_url && !avatarBroken
@@ -137,7 +144,22 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface">
-      <ConfirmDialog />
+      <Dialog
+        visible={signOutVisible}
+        onHide={() => setSignOutVisible(false)}
+        showHeader={false}
+        modal
+        dismissableMask
+        draggable={false}
+        resizable={false}
+        className="admin-signout-dialog"
+        style={{ width: '26rem', maxWidth: '92vw' }}
+        footer={signOutFooter}
+      >
+        <p className="text-text-main text-base leading-relaxed m-0 pt-1">
+          ¿Estás seguro de que deseas cerrar sesión?
+        </p>
+      </Dialog>
       {/* Desktop sidebar */}
       <div
         className="hidden lg:block flex-shrink-0 h-full overflow-hidden transition-[width] duration-300 ease-in-out"

@@ -7,6 +7,8 @@ import { Column } from 'primereact/column'
 import { DataTable } from 'primereact/datatable'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
+import { IconField } from 'primereact/iconfield'
+import { InputIcon } from 'primereact/inputicon'
 import AdminLayout from '../components/Layout/AdminLayout'
 import Spinner from '../components/UI/Spinner'
 import api from '../services/api'
@@ -150,42 +152,52 @@ export default function AdminHistoryPage() {
       </div>
 
       {/* Filtros */}
-      <div className="card p-5 mb-5">
-        {/* Búsqueda — ocupa todo el ancho */}
-        <div className="mb-3">
-          <InputText
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && fetchHistory()}
-            placeholder="Buscar por usuario, correo o conversación..."
-            className="w-full"
-            style={{ height: '42px', fontSize: '14px' }}
-          />
-        </div>
-        {/* Fechas + botones — se envuelven en móvil */}
-        <div className="flex flex-wrap gap-3">
-          <Calendar
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.value)}
-            placeholder="Desde"
-            dateFormat="dd/mm/yy"
-            showIcon
-            className="flex-1"
-            style={{ minWidth: '140px' }}
-            inputStyle={{ height: '42px', fontSize: '14px' }}
-          />
-          <Calendar
-            value={dateTo}
-            onChange={(e) => setDateTo(e.value)}
-            placeholder="Hasta"
-            dateFormat="dd/mm/yy"
-            showIcon
-            className="flex-1"
-            style={{ minWidth: '140px' }}
-            inputStyle={{ height: '42px', fontSize: '14px' }}
-          />
-          <div className="flex gap-2 flex-shrink-0">
+      <div className="card p-4 sm:p-5 mb-5">
+        <div className="admin-filters-grid">
+          <div className="admin-filter-field admin-filter-search">
+            <label htmlFor="history-search" className="admin-filter-label">Buscar</label>
+            <IconField iconPosition="left" className="w-full">
+              <InputIcon className="pi pi-search" />
+              <InputText
+                id="history-search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && fetchHistory()}
+                placeholder="Usuario, correo o conversación"
+                className="w-full"
+              />
+            </IconField>
+          </div>
+
+          <div className="admin-filter-field">
+            <label htmlFor="history-from" className="admin-filter-label">Desde</label>
+            <Calendar
+              inputId="history-from"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.value)}
+              placeholder="dd/mm/aa"
+              dateFormat="dd/mm/yy"
+              showIcon
+              className="w-full admin-filter-calendar"
+            />
+          </div>
+
+          <div className="admin-filter-field">
+            <label htmlFor="history-to" className="admin-filter-label">Hasta</label>
+            <Calendar
+              inputId="history-to"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.value)}
+              placeholder="dd/mm/aa"
+              dateFormat="dd/mm/yy"
+              showIcon
+              className="w-full admin-filter-calendar"
+            />
+          </div>
+
+          <div className="admin-filter-actions">
             <Button
+              type="button"
               label="Filtrar"
               icon="pi pi-search"
               onClick={fetchHistory}
@@ -193,6 +205,7 @@ export default function AdminHistoryPage() {
               className="admin-action-btn admin-btn-primary"
             />
             <Button
+              type="button"
               label="Limpiar"
               icon="pi pi-times"
               onClick={handleClear}
