@@ -190,32 +190,13 @@ export default function AdminHistoryPage() {
               icon="pi pi-search"
               onClick={fetchHistory}
               loading={isLoading}
-              style={{
-                backgroundColor: '#003558',
-                borderColor: '#003558',
-                color: '#ffffff',
-                height: '42px',
-                paddingLeft: '18px',
-                paddingRight: '18px',
-                fontSize: '14px',
-                fontWeight: 600,
-                whiteSpace: 'nowrap',
-              }}
+              className="admin-action-btn admin-btn-primary"
             />
             <Button
               label="Limpiar"
               icon="pi pi-times"
               onClick={handleClear}
-              outlined
-              style={{
-                borderColor: '#003558',
-                color: '#003558',
-                height: '42px',
-                paddingLeft: '14px',
-                paddingRight: '14px',
-                fontSize: '14px',
-                whiteSpace: 'nowrap',
-              }}
+              className="admin-action-btn admin-btn-secondary"
             />
           </div>
         </div>

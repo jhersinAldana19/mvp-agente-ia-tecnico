@@ -204,6 +204,68 @@
     font-weight: 500;
   }
 
+  .admin-action-btn.p-button {
+    height: 42px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .admin-action-btn.admin-btn-primary.p-button {
+    background: #003558;
+    border-color: #003558;
+    color: #ffffff;
+  }
+
+  .admin-action-btn.admin-btn-primary.p-button:enabled:hover {
+    background: #002840;
+    border-color: #002840;
+    color: #ffffff;
+  }
+
+  .admin-action-btn.admin-btn-secondary.p-button {
+    background: #64748b;
+    border-color: #64748b;
+    color: #ffffff;
+  }
+
+  .admin-action-btn.admin-btn-secondary.p-button:enabled:hover {
+    background: #475569;
+    border-color: #475569;
+    color: #ffffff;
+  }
+
+  .admin-action-btn.admin-btn-secondary.p-button:disabled {
+    background: #cbd5e1;
+    border-color: #cbd5e1;
+    color: #ffffff;
+    opacity: 1;
+  }
+
+  .p-confirm-dialog .admin-btn-primary.p-button {
+    background: #003558;
+    border-color: #003558;
+    color: #ffffff;
+  }
+
+  .p-confirm-dialog .admin-btn-primary.p-button:enabled:hover {
+    background: #002840;
+    border-color: #002840;
+  }
+
+  .p-confirm-dialog .admin-btn-secondary.p-button {
+    background: #64748b;
+    border-color: #64748b;
+    color: #ffffff;
+  }
+
+  .p-confirm-dialog .admin-btn-secondary.p-button:enabled:hover {
+    background: #475569;
+    border-color: #475569;
+  }
+
   .admin-table-wrap {
     @apply w-full overflow-x-auto rounded-lg;
     -webkit-overflow-scrolling: touch;

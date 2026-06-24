@@ -214,18 +214,9 @@ export default function AdminUsersPage() {
                 label="Limpiar"
                 icon="pi pi-times"
                 onClick={() => { setSearch(''); setUsageFilter('all') }}
-                outlined
                 disabled={!search && usageFilter === 'all'}
-                style={{
-                  borderColor: '#003558',
-                  color: '#003558',
-                  height: '42px',
-                  paddingLeft: '14px',
-                  paddingRight: '14px',
-                  fontSize: '14px',
-                  whiteSpace: 'nowrap',
-                  flexShrink: 0,
-                }}
+                className="admin-action-btn admin-btn-secondary"
+                style={{ flexShrink: 0 }}
               />
             </div>
           </div>

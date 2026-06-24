@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Avatar } from 'primereact/avatar'
 import { Button } from 'primereact/button'
+import { ConfirmDialog, confirmDialog } from 'primereact/confirmdialog'
 import { Sidebar } from 'primereact/sidebar'
 import { Toolbar } from 'primereact/toolbar'
 import { useAuth } from '../../context/AuthContext'
@@ -33,6 +34,20 @@ export default function AdminLayout({ children }) {
   const handleSignOut = async () => {
     await signOut()
     navigate('/')
+  }
+
+  const requestSignOut = () => {
+    confirmDialog({
+      message: '¿Estás seguro de que deseas cerrar sesión?',
+      header: 'Cerrar sesión',
+      icon: 'pi pi-sign-out',
+      defaultFocus: 'reject',
+      acceptLabel: 'Sí, cerrar sesión',
+      rejectLabel: 'Cancelar',
+      acceptClassName: 'admin-btn-primary',
+      rejectClassName: 'admin-btn-secondary',
+      accept: handleSignOut,
+    })
   }
 
   const profileName = profile?.full_name || ''
@@ -93,7 +108,7 @@ export default function AdminLayout({ children }) {
         text
         severity="secondary"
         className="hidden xl:inline-flex admin-header-signout"
-        onClick={handleSignOut}
+        onClick={requestSignOut}
       />
     </div>
   )
@@ -122,6 +137,7 @@ export default function AdminLayout({ children }) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface">
+      <ConfirmDialog />
       {/* Desktop sidebar */}
       <div
         className="hidden lg:block flex-shrink-0 h-full overflow-hidden transition-[width] duration-300 ease-in-out"
@@ -132,7 +148,7 @@ export default function AdminLayout({ children }) {
           <AdminSidebar
             showCollapse
             onCollapse={collapseDesktop}
-            onSignOut={handleSignOut}
+            onSignOut={requestSignOut}
           />
         </div>
       </div>
@@ -147,7 +163,7 @@ export default function AdminLayout({ children }) {
         style={{ width: SIDEBAR_WIDTH }}
         blockScroll
       >
-        <AdminSidebar onNavClick={closeMobile} onSignOut={handleSignOut} />
+        <AdminSidebar onNavClick={closeMobile} onSignOut={requestSignOut} />
       </Sidebar>
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
