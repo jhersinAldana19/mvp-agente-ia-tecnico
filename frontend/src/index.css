@@ -84,6 +84,126 @@
     @apply sidebar-item text-white/65 hover:bg-white/10 hover:text-white;
   }
 
+  /* ── Admin PrimeReact sidebar & header ── */
+  .admin-prime-sidebar .admin-sidebar-menu.p-menu {
+    background: transparent;
+    border: none;
+    width: 100%;
+    padding: 0;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-menu .p-menu-list {
+    padding: 0;
+    background: transparent;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-menu .p-menuitem {
+    margin-bottom: 0.25rem;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-menu .p-menuitem-content {
+    background: transparent;
+    border-radius: 0.5rem;
+    transition: background-color 0.15s ease;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-menu .p-menuitem-content:hover {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .admin-prime-sidebar .admin-sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg
+           text-white/70 no-underline transition-colors duration-150 w-full;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-link:hover {
+    @apply text-white bg-white/10;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-link-active {
+    @apply bg-white/20 text-white font-semibold;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-link-icon {
+    font-size: 1.05rem;
+    width: 1.25rem;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-icon-btn.p-button {
+    color: rgba(255, 255, 255, 0.75);
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-icon-btn.p-button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .admin-prime-sidebar .admin-sidebar-signout.p-button {
+    justify-content: flex-start;
+    color: rgba(255, 255, 255, 0.7);
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+    font-weight: 500;
+  }
+
+  .admin-prime-sidebar .admin-sidebar-signout.p-button:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .admin-mobile-sidebar.p-sidebar {
+    background: #003558;
+    border: none;
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.18);
+  }
+
+  .admin-mobile-sidebar .p-sidebar-content {
+    padding: 0;
+    height: 100%;
+  }
+
+  .admin-header-toolbar {
+    min-height: 4.75rem;
+    padding: 0.875rem 1.25rem;
+  }
+
+  @media (min-width: 1280px) {
+    .admin-header-toolbar {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  .admin-header-toolbar-inner.p-toolbar {
+    padding: 0;
+    min-height: 3rem;
+    gap: 1rem;
+  }
+
+  .admin-header-toolbar-inner .p-toolbar-group-start,
+  .admin-header-toolbar-inner .p-toolbar-group-end {
+    align-items: center;
+  }
+
+  .admin-header-menu-btn.p-button,
+  .admin-header-signout.p-button {
+    color: #64748b;
+  }
+
+  .admin-header-menu-btn.p-button:hover,
+  .admin-header-signout.p-button:hover {
+    color: #003558;
+    background: #f1f5f9;
+  }
+
+  .admin-header-signout .p-button-label {
+    font-weight: 500;
+  }
+
   .admin-table-wrap {
     @apply w-full overflow-x-auto rounded-lg;
     -webkit-overflow-scrolling: touch;
