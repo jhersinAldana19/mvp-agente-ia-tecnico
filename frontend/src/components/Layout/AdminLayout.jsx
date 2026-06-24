@@ -45,7 +45,7 @@ export default function AdminLayout({ children }) {
       <Button
         type="button"
         label="Cancelar"
-        severity="secondary"
+        className="admin-btn-secondary"
         onClick={() => setSignOutVisible(false)}
       />
       <Button
@@ -147,7 +147,8 @@ export default function AdminLayout({ children }) {
       <Dialog
         visible={signOutVisible}
         onHide={() => setSignOutVisible(false)}
-        showHeader={false}
+        header=" "
+        closable
         modal
         dismissableMask
         draggable={false}
@@ -156,7 +157,7 @@ export default function AdminLayout({ children }) {
         style={{ width: '26rem', maxWidth: '92vw' }}
         footer={signOutFooter}
       >
-        <p className="text-text-main text-base leading-relaxed m-0 pt-1">
+        <p className="text-text-main text-base leading-relaxed m-0">
           ¿Estás seguro de que deseas cerrar sesión?
         </p>
       </Dialog>

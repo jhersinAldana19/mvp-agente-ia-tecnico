@@ -205,12 +205,12 @@
   }
 
   .admin-action-btn.p-button {
-    height: 42px;
-    padding-left: 1rem;
-    padding-right: 1rem;
-    font-size: 14px;
+    min-height: 2.75rem;
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
     font-weight: 600;
     white-space: nowrap;
+    gap: 0.5rem;
   }
 
   .admin-action-btn.admin-btn-primary.p-button {
@@ -225,12 +225,14 @@
     color: #ffffff;
   }
 
+  .admin-btn-secondary.p-button,
   .admin-action-btn.admin-btn-secondary.p-button {
     background: #64748b;
     border-color: #64748b;
     color: #ffffff;
   }
 
+  .admin-btn-secondary.p-button:enabled:hover,
   .admin-action-btn.admin-btn-secondary.p-button:enabled:hover {
     background: #475569;
     border-color: #475569;
@@ -256,13 +258,32 @@
     color: #ffffff;
   }
 
+  .admin-signout-dialog .p-dialog-header {
+    padding: 0.75rem 0.75rem 0;
+    border-bottom: none;
+  }
+
+  .admin-signout-dialog .p-dialog-title {
+    display: none;
+  }
+
+  .admin-signout-dialog .p-dialog-header-icons {
+    margin-left: auto;
+  }
+
   .admin-signout-dialog .p-dialog-content {
-    padding: 1.5rem 1.5rem 0.5rem;
+    padding: 0.5rem 1.5rem 0.75rem;
   }
 
   .admin-signout-dialog .p-dialog-footer {
-    padding: 0 1.5rem 1.5rem;
+    padding: 0 1.5rem 1.25rem;
     border-top: none;
+  }
+
+  .admin-signout-dialog .p-dialog-footer .p-button {
+    min-height: 2.625rem;
+    padding: 0.625rem 1.25rem;
+    gap: 0.5rem;
   }
 
   .admin-filters-grid {
@@ -285,6 +306,22 @@
   .admin-filter-calendar.p-calendar,
   .admin-filter-calendar .p-inputtext {
     width: 100%;
+  }
+
+  .admin-filters-grid .p-inputtext {
+    min-height: 2.75rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+  }
+
+  .admin-filters-grid .p-icon-field .p-inputtext {
+    padding-left: 2.5rem;
+  }
+
+  .admin-filters-grid .p-calendar .p-datepicker-trigger {
+    width: 2.75rem;
+    min-height: 2.75rem;
   }
 
   .admin-filter-actions {
@@ -349,4 +386,34 @@
   .admin-role-dropdown .p-dropdown-label {
     padding: 0.35rem 0.5rem;
   }
+}
+
+/* Tailwind preflight resetea padding de inputs/botones — restaurar PrimeReact */
+.p-inputtext:not(.p-inputtextarea) {
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+}
+
+.p-icon-field > .p-inputtext {
+  padding-left: 2.5rem;
+}
+
+.p-calendar .p-inputtext {
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+}
+
+.p-calendar .p-datepicker-trigger {
+  width: 2.75rem;
+}
+
+.p-button:not(.p-button-icon-only):not(.p-button-link):not(.p-button-text) {
+  min-height: 2.625rem;
+  padding: 0.625rem 1.25rem;
+  gap: 0.5rem;
+}
+
+.p-button.p-button-sm:not(.p-button-icon-only) {
+  min-height: 2.25rem;
+  padding: 0.5rem 0.875rem;
 }
