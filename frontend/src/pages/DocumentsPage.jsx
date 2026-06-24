@@ -28,6 +28,38 @@ const TREE = [
     ],
   },
   {
+    id: 'codigos-falla',
+    name: 'CÓDIGOS DE FALLA',
+    type: 'folder',
+    children: [
+      {
+        id: 'codigos-falla-trs4531',
+        name: 'TRS4531',
+        type: 'folder',
+        children: [
+          {
+            id: 'codigos-cummins',
+            name: 'Cummins QSM11-T3 – Códigos de error',
+            type: 'file',
+            serverPath: 'codigos-de-fallas/trs4531/pdf/cap10 anex codigos de error TRS4531 cummins QSM11-T3.pdf',
+          },
+          {
+            id: 'codigos-dana',
+            name: 'DANA TE30 – Códigos de error',
+            type: 'file',
+            serverPath: 'codigos-de-fallas/trs4531/pdf/cap10 anex codigos de error TRS4531 dana TE30.pdf',
+          },
+          {
+            id: 'codigos-vehicle',
+            name: 'Vehicle Controller – Códigos de error',
+            type: 'file',
+            serverPath: 'codigos-de-fallas/trs4531/pdf/cap10 anex codigos de error TRS4531 vehicle.pdf',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'comercial',
     name: 'COMERCIAL',
     type: 'folder',
