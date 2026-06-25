@@ -100,19 +100,26 @@ export default function AdminProfilePage() {
   if (!profile) return null
 
   return (
-    <AdminLayout bgImage={fondoPerfil}>
-      <div className="max-w-lg mx-auto">
+    <AdminLayout>
+      <div className="max-w-3xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-white drop-shadow">Mi Perfil</h1>
-          <p className="text-sm text-white/90 mt-0.5 drop-shadow">Edita tu nombre y foto de perfil</p>
+          <h1 className="text-xl font-semibold text-text-main">Mi Perfil</h1>
+          <p className="text-sm text-text-muted mt-0.5">Edita tu nombre y foto de perfil</p>
         </div>
 
+        {/* Tarjeta estilo LinkedIn: banner + avatar flotante */}
         <div className="card overflow-hidden mb-6">
-          {/* Avatar */}
-          <div className="flex flex-col items-center px-8 py-8">
-            <div className="relative mb-4 group">
+          {/* Banner de portada */}
+          <div className="h-40 sm:h-48 w-full overflow-hidden">
+            <img src={fondoPerfil} alt="portada" className="w-full h-full object-cover" />
+          </div>
+
+          {/* Cuerpo */}
+          <div className="px-6 sm:px-8 pb-8">
+            {/* Avatar flotante a la izquierda */}
+            <div className="relative -mt-14 sm:-mt-16 mb-4 group w-fit">
               <div onClick={handleAvatarClick}
-                className="w-24 h-24 rounded-full overflow-hidden cursor-pointer
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden cursor-pointer
                            border-4 border-white shadow-md hover:border-primary transition-colors relative">
                 {profile.avatar_url && !imgBroken ? (
                   <img src={profile.avatar_url} alt={profile.full_name}
@@ -120,7 +127,7 @@ export default function AdminProfilePage() {
                     onError={() => setImgBroken(true)} />
                 ) : (
                   <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                    <svg className="w-12 h-12 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-14 h-14 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                         d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
@@ -145,24 +152,13 @@ export default function AdminProfilePage() {
                 className="hidden" onChange={handleFileChange} />
             </div>
 
-            {uploading && <p className="text-xs text-text-muted mb-2">Subiendo imagen...</p>}
-            {uploadSuccess && !uploading && (
-              <p className="text-xs text-green-600 mb-2">Foto actualizada correctamente.</p>
-            )}
-            {uploadError && (
-              <p className="text-xs text-red-600 mb-2 text-center max-w-xs">{uploadError}</p>
-            )}
-            <p className="text-xs text-text-muted mb-4">
-              Haz clic en la foto para cambiarla (JPG/PNG/WebP · máx. 2 MB)
-            </p>
-
             {/* Nombre editable */}
             {editingName ? (
-              <div className="flex flex-col items-center gap-2 w-full max-w-xs">
+              <div className="flex flex-col gap-2 w-full max-w-xs">
                 <input autoFocus value={nameValue}
                   onChange={(e) => setNameValue(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && saveName()}
-                  className="input-field text-center text-sm"
+                  className="input-field text-sm"
                   placeholder="Tu nombre completo" />
                 {nameError && <p className="text-xs text-red-600">{nameError}</p>}
                 <div className="flex gap-2">
@@ -179,7 +175,7 @@ export default function AdminProfilePage() {
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-semibold text-text-main">{profile.full_name}</h2>
+                <h2 className="text-2xl font-semibold text-text-main">{profile.full_name}</h2>
                 <button onClick={startEditName}
                   className="text-text-muted hover:text-primary transition-colors" title="Editar nombre">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -191,7 +187,18 @@ export default function AdminProfilePage() {
               </div>
             )}
             <p className="text-text-muted text-sm mt-1">{profile.email}</p>
-            <span className="badge-admin mt-2">Admin</span>
+            <span className="badge-admin mt-2 inline-block">Admin</span>
+
+            {uploading && <p className="text-xs text-text-muted mt-3">Subiendo imagen...</p>}
+            {uploadSuccess && !uploading && (
+              <p className="text-xs text-green-600 mt-3">Foto actualizada correctamente.</p>
+            )}
+            {uploadError && (
+              <p className="text-xs text-red-600 mt-3 max-w-xs">{uploadError}</p>
+            )}
+            <p className="text-xs text-text-muted mt-3">
+              Haz clic en la foto para cambiarla (JPG/PNG/WebP · máx. 2 MB)
+            </p>
           </div>
         </div>
 
