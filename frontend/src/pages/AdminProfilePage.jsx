@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { supabase } from '../services/supabaseClient'
 import api from '../services/api'
 import Spinner from '../components/UI/Spinner'
+import fondoPerfil from '../assets/perfil/fondo-perfil.webp'
 
 function InfoRow({ label, value }) {
   return (
@@ -107,9 +108,14 @@ export default function AdminProfilePage() {
         </div>
 
         <div className="card overflow-hidden mb-6">
-          {/* Avatar */}
-          <div className="flex flex-col items-center px-8 py-8">
-            <div className="relative mb-4 group">
+          {/* Banner de portada */}
+          <div className="h-32 w-full overflow-hidden">
+            <img src={fondoPerfil} alt="portada" className="w-full h-full object-cover" />
+          </div>
+
+          {/* Avatar — flota sobre el banner */}
+          <div className="flex flex-col items-center px-8 pb-8">
+            <div className="relative -mt-12 mb-4 group">
               <div onClick={handleAvatarClick}
                 className="w-24 h-24 rounded-full overflow-hidden cursor-pointer
                            border-4 border-white shadow-md hover:border-primary transition-colors relative">
