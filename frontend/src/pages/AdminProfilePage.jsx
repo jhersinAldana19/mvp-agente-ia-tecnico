@@ -100,22 +100,17 @@ export default function AdminProfilePage() {
   if (!profile) return null
 
   return (
-    <AdminLayout>
+    <AdminLayout bgImage={fondoPerfil}>
       <div className="max-w-lg mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-semibold text-text-main">Mi Perfil</h1>
-          <p className="text-sm text-text-muted mt-0.5">Edita tu nombre y foto de perfil</p>
+          <h1 className="text-xl font-semibold text-white drop-shadow">Mi Perfil</h1>
+          <p className="text-sm text-white/90 mt-0.5 drop-shadow">Edita tu nombre y foto de perfil</p>
         </div>
 
         <div className="card overflow-hidden mb-6">
-          {/* Banner de portada */}
-          <div className="h-32 w-full overflow-hidden">
-            <img src={fondoPerfil} alt="portada" className="w-full h-full object-cover" />
-          </div>
-
-          {/* Avatar — flota sobre el banner */}
-          <div className="flex flex-col items-center px-8 pb-8">
-            <div className="relative -mt-12 mb-4 group">
+          {/* Avatar */}
+          <div className="flex flex-col items-center px-8 py-8">
+            <div className="relative mb-4 group">
               <div onClick={handleAvatarClick}
                 className="w-24 h-24 rounded-full overflow-hidden cursor-pointer
                            border-4 border-white shadow-md hover:border-primary transition-colors relative">
