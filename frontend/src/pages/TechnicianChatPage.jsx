@@ -69,7 +69,7 @@ function SofiaPanel() {
 
       {/* Descripción */}
       <p className="text-xs text-text-muted leading-relaxed mb-3">
-        Agente técnico con IA para resolver consultas del equipo TRS4531 con apoyo en documentación de MANUAL DE OPERACIÓN, COMERCIAL y CÓDIGOS DE FALLA.
+        Agente técnico con IA para resolver consultas del equipo TRS4531 con apoyo en documentación de MANUAL DE OPERACIÓN, MANUAL DE REPUESTOS, COMERCIAL y CÓDIGOS DE FALLA.
       </p>
 
       {/* Estado */}
