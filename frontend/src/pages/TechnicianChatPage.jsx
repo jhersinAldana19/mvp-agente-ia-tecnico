@@ -19,13 +19,13 @@ const SOFIA_ACRONYM = [
 function SofiaAcronym() {
   return (
     <div
-      className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/[0.07] via-white to-primary/[0.03] px-3.5 py-3 mb-3"
+      className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/[0.07] via-white to-primary/[0.03] px-3.5 py-2.5 mb-3"
       aria-label="Significado de SOFIA"
     >
-      <ul className="space-y-1.5">
+      <ul className="space-y-0">
         {SOFIA_ACRONYM.map(({ letter, word }) => (
-          <li key={letter} className="flex items-baseline">
-            <span className="text-[11px] leading-snug tracking-wide">
+          <li key={letter} className="flex items-baseline leading-none py-px">
+            <span className="text-[11px] leading-none tracking-wide">
               <span className="inline-block w-3.5 font-bold text-primary">{letter}</span>
               <span className="text-text-muted">{word.slice(1)}</span>
             </span>
