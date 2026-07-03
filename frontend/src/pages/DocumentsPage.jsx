@@ -306,7 +306,8 @@ function PdfViewer({ file, onBack }) {
       if (status === 404) {
         setError(
           'El PDF no está disponible en el servidor. Si acabas de agregarlo, '
-          + 'confirma que fue desplegado en Render (carpeta backend/documents/).'
+          + 'confirma que Railway desplegó el último commit (carpeta backend/documents/). '
+          + 'Verifica en /health que spare_parts_pdfs sea 17.'
         )
       } else {
         setError(err?.message || 'No se pudo cargar el documento.')
