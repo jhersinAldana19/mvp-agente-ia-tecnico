@@ -54,6 +54,15 @@ _LUBRICACION_WORDS = frozenset({
 })
 
 _FAULT_CODES_FILTER = {"doc_type": {"$eq": "fault_codes"}}
+_SPARE_PARTS_FILTER = {"doc_type": {"$eq": "spare_parts"}}
+_SPARE_INDEX_FILTER = {
+    "doc_type": {"$eq": "spare_parts"},
+    "document_subtype": {"$eq": "indice_general_manual_repuestos"},
+}
+_SPARE_INSTRUCTIONS_FILTER = {
+    "doc_type": {"$eq": "spare_parts"},
+    "document_subtype": {"$eq": "instrucciones_manual_repuestos"},
+}
 
 
 def _is_legacy_fault_pdf(document_name: str) -> bool:
@@ -152,13 +161,22 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
         infer_subsystem_hints,
         snippet_contains_code,
     )
+    from app.services.spare_parts_parser import parse_spare_parts_query
+    from app.services.spare_parts_service import (
+        buscar_dibujo,
+        buscar_numero_parte,
+        formatear_contexto_repuesto,
+        snippet_contains_part_number,
+    )
     from app.services.pinecone_service import PineconeService
 
     embedder = get_embedding_provider()
     pinecone  = PineconeService()
 
     fault_parsed = parse_fault_code_query(question)
+    spare_parsed = parse_spare_parts_query(question)
     structured_fault = ""
+    structured_spare = ""
     if fault_parsed.is_ambiguous:
         structured_fault = build_ambiguity_context(fault_parsed)
 
@@ -171,7 +189,20 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
             fault_parsed.is_ambiguous,
         )
 
-    search_question = fault_parsed.search_text or question
+    if settings.environment == "development" and spare_parsed.is_spare_parts_question:
+        logger.info(
+            "SPARE_PARSE part=%s drawing=%s chapter=%s pos=%s",
+            spare_parsed.part_number,
+            spare_parsed.drawing_number,
+            spare_parsed.chapter,
+            spare_parsed.position,
+        )
+
+    search_question = (
+        spare_parsed.search_text
+        or fault_parsed.search_text
+        or question
+    )
     embedding = await embedder.embed(search_question)
 
     # ── 1. Búsqueda principal en manuales técnicos ───────────────────────────
@@ -252,6 +283,78 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
                     else formatear_contexto_falla(local)
                 )
 
+    # ── 2b. Manual de repuestos (doc_type = spare_parts) ─────────────────────
+    if spare_parsed.is_spare_parts_question:
+        if spare_parsed.part_number:
+            part_filter = {
+                "doc_type": {"$eq": "spare_parts"},
+                "part_numbers": {"$in": [spare_parsed.part_number]},
+            }
+            exact_part = await pinecone.search(
+                embedding, top_k=8, namespace=_NS_TECNICO, filter=part_filter,
+            )
+            for s in exact_part:
+                s.score = 0.99
+            _merge(exact_part)
+
+        if spare_parsed.drawing_number:
+            drawing_filter = {
+                "doc_type": {"$eq": "spare_parts"},
+                "drawing_number": {"$eq": spare_parsed.drawing_number},
+            }
+            exact_drawing = await pinecone.search(
+                embedding, top_k=10, namespace=_NS_TECNICO, filter=drawing_filter,
+            )
+            for s in exact_drawing:
+                s.score = 0.98
+            _merge(exact_drawing)
+
+        if spare_parsed.chapter:
+            chapter_filter = {
+                "doc_type": {"$eq": "spare_parts"},
+                "chapter": {"$eq": spare_parsed.chapter},
+            }
+            _merge(await pinecone.search(
+                embedding, top_k=8, namespace=_NS_TECNICO, filter=chapter_filter,
+            ), boost=0.08)
+
+        spare_emb = await embedder.embed(search_question)
+        _merge(await pinecone.search(
+            spare_emb, top_k=12, namespace=_NS_TECNICO, filter=_SPARE_PARTS_FILTER,
+        ), boost=0.12)
+
+        _merge(await pinecone.search(
+            embedding, top_k=4, namespace=_NS_TECNICO, filter=_SPARE_INDEX_FILTER,
+        ), boost=0.10)
+
+        _merge(await pinecone.search(
+            embedding, top_k=3, namespace=_NS_TECNICO, filter=_SPARE_INSTRUCTIONS_FILTER,
+        ), boost=0.08)
+
+        if spare_parsed.part_number and not any(
+            snippet_contains_part_number(s.snippet, spare_parsed.part_number)
+            for s in sources
+        ):
+            local = buscar_numero_parte(spare_parsed.part_number)
+            if local:
+                if settings.environment == "development":
+                    logger.info(
+                        "SPARE_LOCAL_HIT part=%s doc=%s drawing=%s",
+                        spare_parsed.part_number,
+                        local["document_name"],
+                        local.get("drawing_number"),
+                    )
+                _merge([_entry_to_source(local)])
+                structured_spare = formatear_contexto_repuesto(local)
+
+        elif spare_parsed.drawing_number and not any(
+            spare_parsed.drawing_number in (s.snippet or "") for s in sources
+        ):
+            local_drawings = buscar_dibujo(spare_parsed.drawing_number)
+            if local_drawings:
+                _merge([_entry_to_source(local_drawings[0])])
+                structured_spare = formatear_contexto_repuesto(local_drawings[0])
+
     # ── 3. Reformulación con sinónimos técnicos ("marca" → "fabricante modelo")
     alt_text = _synonym_query(question)
     if alt_text:
@@ -289,7 +392,7 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     if exact_md_hits:
         sources = [s for s in sources if not _is_legacy_fault_pdf(s.document_name)]
 
-    return sources[:_RAG_TOP_K], structured_fault
+    return sources[:_RAG_TOP_K], structured_fault, structured_spare
 
 
 @router.post("", response_model=ChatResponse)
@@ -309,9 +412,9 @@ async def send_message(
         from app.services.lubricantes_service import buscar_sistema, formatear_contexto
         sistema = buscar_sistema(payload.question)
         structured = formatear_contexto(sistema) if sistema else ""
-        sources, fault_context = await _retrieve_sources(payload.question)
-        if fault_context:
-            structured = f"{structured}\n\n{fault_context}".strip() if structured else fault_context
+        sources, fault_context, spare_context = await _retrieve_sources(payload.question)
+        structured_parts = [p for p in (structured, fault_context, spare_context) if p]
+        structured = "\n\n".join(structured_parts) if structured_parts else ""
 
     answer = await llm.generate_response(payload.question, structured, sources)
 
