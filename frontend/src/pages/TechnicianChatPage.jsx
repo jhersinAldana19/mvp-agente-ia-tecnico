@@ -8,6 +8,34 @@ import api from '../services/api'
 import perfilAgente from '../assets/agente/perfil-agente.webp'
 import homeAgente from '../assets/agente/home_agente.webp'
 
+const SOFIA_ACRONYM = [
+  { letter: 'S', word: 'Smart' },
+  { letter: 'O', word: 'Operations' },
+  { letter: 'F', word: 'Field' },
+  { letter: 'I', word: 'Intelligence' },
+  { letter: 'A', word: 'Assistant' },
+]
+
+function SofiaAcronym() {
+  return (
+    <div
+      className="rounded-xl border border-primary/10 bg-gradient-to-br from-primary/[0.07] via-white to-primary/[0.03] px-3.5 py-3 mb-3"
+      aria-label="Significado de SOFIA"
+    >
+      <ul className="space-y-1.5">
+        {SOFIA_ACRONYM.map(({ letter, word }) => (
+          <li key={letter} className="flex items-baseline">
+            <span className="text-[11px] leading-snug tracking-wide">
+              <span className="inline-block w-3.5 font-bold text-primary">{letter}</span>
+              <span className="text-text-muted">{word.slice(1)}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function FeatureItem({ icon, text }) {
   const icons = {
     doc: (
@@ -58,14 +86,23 @@ function SofiaPanel() {
     <div className="card p-5 flex flex-col">
       {/* Imagen principal */}
       <div className="flex justify-center mb-4">
-        <div className="w-44 h-44 rounded-2xl overflow-hidden bg-[#EBF4FF] flex items-center justify-center">
+        <div className="w-40 h-40 rounded-2xl overflow-hidden bg-[#EBF4FF] flex items-center justify-center ring-1 ring-primary/10">
           <img src={homeAgente} alt="SOFIA" className="w-full h-full object-cover" />
         </div>
       </div>
 
-      {/* Nombre y subtítulo */}
-      <h2 className="text-lg font-bold text-text-main">SOFIA</h2>
-      <p className="text-sm text-text-muted mb-2">Agente Técnico de TECPORT</p>
+      {/* Marca SOFIA® + acrónimo */}
+      <div className="text-center mb-1">
+        <h2 className="text-xl font-bold text-text-main tracking-tight leading-none">
+          SOFIA
+          <sup className="ml-0.5 text-[0.45em] font-semibold text-primary/60 align-super">®</sup>
+        </h2>
+        <p className="text-[11px] text-text-muted mt-1.5 uppercase tracking-[0.12em] font-medium">
+          Agente Técnico de TECPORT
+        </p>
+      </div>
+
+      <SofiaAcronym />
 
       {/* Descripción */}
       <p className="text-xs text-text-muted leading-relaxed mb-3">
@@ -141,7 +178,7 @@ export default function TechnicianChatPage() {
       <div className="flex gap-4" style={{ height: 'calc(100dvh - 9.5rem)', minHeight: '420px' }}>
 
         {/* Sidebar SOFIA — solo desktop */}
-        <aside className="hidden lg:flex flex-col w-60 xl:w-64 flex-shrink-0 overflow-y-auto rounded-xl">
+        <aside className="hidden lg:flex flex-col w-64 xl:w-72 flex-shrink-0 overflow-y-auto rounded-xl">
           <SofiaPanel />
         </aside>
 
@@ -153,7 +190,9 @@ export default function TechnicianChatPage() {
             <img src={perfilAgente} alt="SOFIA"
               className="w-8 h-8 rounded-full object-cover border border-border flex-shrink-0" />
             <div>
-              <p className="text-sm font-semibold text-text-main leading-none mb-1">SOFIA</p>
+              <p className="text-sm font-semibold text-text-main leading-none mb-1">
+                SOFIA<sup className="ml-px text-[0.55em] font-semibold text-primary/50 align-super">®</sup>
+              </p>
               <div className="flex items-center gap-1.5">
                 <span className="w-1.5 h-1.5 bg-green-500 rounded-full" />
                 <span className="text-xs text-green-600 font-medium">En línea</span>
