@@ -28,6 +28,122 @@ const TREE = [
     ],
   },
   {
+    id: 'repuestos',
+    name: 'MANUALES DE REPUESTOS',
+    type: 'folder',
+    children: [
+      {
+        id: 'repuestos-trs4531',
+        name: 'TRS4531',
+        type: 'folder',
+        children: [
+          {
+            id: 'rep-indice',
+            name: 'Índice general del manual',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/C-indice man repuestos TRS4531.pdf',
+          },
+          {
+            id: 'rep-instrucciones',
+            name: 'Instrucciones de uso del manual',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/B-instrucciones de uso man repuestos TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap01',
+            name: 'Cap. 01 – Chasis',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/01 chassis TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap03',
+            name: 'Cap. 03 – Sistema eléctrico',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/03 electrical system TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap04-t3',
+            name: 'Cap. 04 – Motor T3',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/04 T3 engine TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap04-t4',
+            name: 'Cap. 04 – Motor T4/Eur5',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/04 T4&Eur5 engine TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap05',
+            name: 'Cap. 05 – Refrigeración T4/Eur5',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/05 T4&Eur5 cooling TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap06-p1',
+            name: 'Cap. 06 – Transmisión (Parte 1)',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/06 gearbox TRS4531 part1.pdf',
+          },
+          {
+            id: 'rep-cap06-p2',
+            name: 'Cap. 06 – Transmisión (Parte 2)',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/06 gearbox TRS4531 part2.pdf',
+          },
+          {
+            id: 'rep-cap07',
+            name: 'Cap. 07 – Eje frontal',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/07 front drive axle TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap08',
+            name: 'Cap. 08 – Sistema de frenos',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/08 brake system TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap09',
+            name: 'Cap. 09 – Eje de dirección trasero',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/09 rear steering axle TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap10',
+            name: 'Cap. 10 – Sistema hidráulico',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/10 hydraulic system TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap11',
+            name: 'Cap. 11 – Pluma',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/11 boon TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap12',
+            name: 'Cap. 12 – Spreader',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/12 spreader TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap13',
+            name: 'Cap. 13 – Calefacción y A/C',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/13 heater and ac system TRS4531.pdf',
+          },
+          {
+            id: 'rep-cap16',
+            name: 'Cap. 16 – Herramientas y otros',
+            type: 'file',
+            serverPath: 'manuales-de-repuestos/trs4531/pdf/16 tools & others TRS4531.pdf',
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: 'codigos-falla',
     name: 'CÓDIGOS DE FALLA',
     type: 'folder',
@@ -190,7 +306,7 @@ function PdfViewer({ file, onBack }) {
       if (status === 404) {
         setError(
           'El PDF no está disponible en el servidor. Si acabas de agregarlo, '
-          + 'confirma que fue desplegado en Render (carpeta backend/documents/codigos-de-fallas/trs4531/pdf/).'
+          + 'confirma que fue desplegado en Render (carpeta backend/documents/).'
         )
       } else {
         setError(err?.message || 'No se pudo cargar el documento.')
