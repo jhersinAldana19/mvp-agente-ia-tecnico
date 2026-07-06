@@ -10,6 +10,8 @@ from app.schemas.source import SourceItem
 from app.services.llm.factory import get_llm_provider
 from app.services.supabase_service import SupabaseService
 
+from app.services.manual_specs_service import SPECS_MD_FILENAME, SPECS_PDF_FILENAME
+
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
@@ -17,7 +19,8 @@ _RAG_TOP_K            = 12
 _RAG_TOP_K_COMERCIAL  = 4   # slots para brochures en cada consulta
 _NS_TECNICO           = "trs4531"
 _NS_COMERCIAL         = "trs4531-comercial"
-_SPECS_DOC            = "cap9-especificaciones-trs4531 (1).pdf"
+_SPECS_DOC_MD         = SPECS_MD_FILENAME
+_SPECS_DOC_PDF_LEGACY = SPECS_PDF_FILENAME
 _LUBRICACION_DOC      = "cap7-lubricacion-trs4531-v1 (1).pdf"
 
 # Términos coloquiales → equivalentes técnicos usados en los documentos.
@@ -69,6 +72,11 @@ def _is_legacy_fault_pdf(document_name: str) -> bool:
     """PDFs antiguos de códigos de falla (pre-Markdown) que compiten con las fichas .md."""
     n = document_name.lower()
     return n.endswith(".pdf") and "codigos de error" in n
+
+
+def _is_legacy_specs_pdf(document_name: str) -> bool:
+    """PDF cap9 — reemplazado por cap9-especificaciones-trs4531.md para tablas."""
+    return document_name == _SPECS_DOC_PDF_LEGACY
 
 
 def _exact_fault_filter(fault_parsed) -> dict | None:
@@ -376,9 +384,12 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     if _is_spec_question(question):
         _merge(await pinecone.search(
             embedding,
-            top_k=8,
+            top_k=10,
             namespace=_NS_TECNICO,
-            filter={"document_name": {"$eq": _SPECS_DOC}},
+            filter={
+                "doc_type": {"$eq": "manual_specs"},
+                "document_name": {"$eq": _SPECS_DOC_MD},
+            },
         ))
 
     # ── 6. Búsqueda en brochures comerciales (siempre) ───────────────────────
@@ -388,9 +399,10 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
 
     sources.sort(key=lambda x: x.score, reverse=True)
 
-    # Si hay ficha Markdown exacta, excluir PDFs legacy de códigos de falla.
+    # Excluir PDFs legacy cuando existen fichas Markdown equivalentes.
     if exact_md_hits:
         sources = [s for s in sources if not _is_legacy_fault_pdf(s.document_name)]
+    sources = [s for s in sources if not _is_legacy_specs_pdf(s.document_name)]
 
     return sources[:_RAG_TOP_K], structured_fault, structured_spare
 

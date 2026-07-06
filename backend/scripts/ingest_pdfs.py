@@ -19,6 +19,9 @@ Uso:
     # Ingestar manuales técnicos (si alguna vez necesitás re-ingestar):
     python scripts/ingest_pdfs.py --dir manuales/trs4531 --namespace trs4531
 
+    # Capítulo 9 (tablas): usar Markdown, NO re-ingestar el PDF cap9:
+    python scripts/ingest_manual_specs.py --purge-pdf
+
 Notas:
     - Solo procesa PDFs del subdirectorio indicado con --dir.
     - Los namespaces separan los manuales de los documentos comerciales en Pinecone.

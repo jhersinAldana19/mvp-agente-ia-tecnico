@@ -2,6 +2,7 @@ venv/
 .venv/
 # Manuales/comercial y .md de códigos de falla: solo local (no versionar).
 documents/manuales/
+documents/manuales/trs4531/*.md
 documents/comercial/
 documents/manuales-de-repuestos/trs4531/*.md
 documents/codigos-de-fallas/trs4531/*.md
