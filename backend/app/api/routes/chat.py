@@ -10,6 +10,7 @@ from app.schemas.source import SourceItem
 from app.services.llm.factory import get_llm_provider
 from app.services.supabase_service import SupabaseService
 
+from app.services.manual_lubrication_service import LUB_MD_FILENAME, LUB_PDF_FILENAME
 from app.services.manual_specs_service import SPECS_MD_FILENAME, SPECS_PDF_FILENAME
 
 router = APIRouter()
@@ -21,7 +22,8 @@ _NS_TECNICO           = "trs4531"
 _NS_COMERCIAL         = "trs4531-comercial"
 _SPECS_DOC_MD         = SPECS_MD_FILENAME
 _SPECS_DOC_PDF_LEGACY = SPECS_PDF_FILENAME
-_LUBRICACION_DOC      = "cap7-lubricacion-trs4531-v1 (1).pdf"
+_LUB_DOC_MD           = LUB_MD_FILENAME
+_LUB_DOC_PDF_LEGACY   = LUB_PDF_FILENAME
 
 # Términos coloquiales → equivalentes técnicos usados en los documentos.
 _SYNONYM_MAP = {
@@ -77,6 +79,11 @@ def _is_legacy_fault_pdf(document_name: str) -> bool:
 def _is_legacy_specs_pdf(document_name: str) -> bool:
     """PDF cap9 — reemplazado por cap9-especificaciones-trs4531.md para tablas."""
     return document_name == _SPECS_DOC_PDF_LEGACY
+
+
+def _is_legacy_lubricacion_pdf(document_name: str) -> bool:
+    """PDF cap7 — reemplazado por cap7-lubricacion-trs4531-v1.md."""
+    return document_name == _LUB_DOC_PDF_LEGACY
 
 
 def _exact_fault_filter(fault_parsed) -> dict | None:
@@ -375,9 +382,12 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     if _is_lubricacion_question(question):
         _merge(await pinecone.search(
             embedding,
-            top_k=8,
+            top_k=10,
             namespace=_NS_TECNICO,
-            filter={"document_name": {"$eq": _LUBRICACION_DOC}},
+            filter={
+                "doc_type": {"$eq": "manual_lubrication"},
+                "document_name": {"$eq": _LUB_DOC_MD},
+            },
         ))
 
     # ── 5. Refuerzo cap9 para preguntas de especificaciones ──────────────────
@@ -403,6 +413,7 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     if exact_md_hits:
         sources = [s for s in sources if not _is_legacy_fault_pdf(s.document_name)]
     sources = [s for s in sources if not _is_legacy_specs_pdf(s.document_name)]
+    sources = [s for s in sources if not _is_legacy_lubricacion_pdf(s.document_name)]
 
     return sources[:_RAG_TOP_K], structured_fault, structured_spare
 
@@ -421,12 +432,8 @@ async def send_message(
         sources = MOCK_SOURCES
         structured = ""
     else:
-        from app.services.lubricantes_service import buscar_sistema, formatear_contexto
-        sistema = buscar_sistema(payload.question)
-        structured = formatear_contexto(sistema) if sistema else ""
         sources, fault_context, spare_context = await _retrieve_sources(payload.question)
-        structured_parts = [p for p in (structured, fault_context, spare_context) if p]
-        structured = "\n\n".join(structured_parts) if structured_parts else ""
+        structured = "\n\n".join(p for p in (fault_context, spare_context) if p)
 
     answer = await llm.generate_response(payload.question, structured, sources)
 

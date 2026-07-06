@@ -19,6 +19,9 @@ Uso:
     # Ingestar manuales técnicos (si alguna vez necesitás re-ingestar):
     python scripts/ingest_pdfs.py --dir manuales/trs4531 --namespace trs4531
 
+    # Capítulo 7 (tablas): usar Markdown, NO re-ingestar el PDF cap7:
+    python scripts/ingest_manual_lubrication.py --purge-pdf
+
     # Capítulo 9 (tablas): usar Markdown, NO re-ingestar el PDF cap9:
     python scripts/ingest_manual_specs.py --purge-pdf
 
