@@ -25,6 +25,9 @@ Uso:
     # Capítulo 9 (tablas): usar Markdown, NO re-ingestar el PDF cap9:
     python scripts/ingest_manual_specs.py --purge-pdf
 
+    # Brochure técnico comercial (tablas): usar Markdown, NO re-ingestar ese PDF:
+    python scripts/ingest_commercial_brochure.py --purge-pdf
+
 Notas:
     - Solo procesa PDFs del subdirectorio indicado con --dir.
     - Los namespaces separan los manuales de los documentos comerciales en Pinecone.

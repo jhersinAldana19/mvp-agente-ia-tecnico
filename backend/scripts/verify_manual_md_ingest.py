@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verifica que cap7/cap9 .md estén en Pinecone y los PDF legacy no."""
+"""Verifica cap7/cap9 y brochure técnico comercial (.md) en Pinecone; PDF legacy no."""
 import asyncio
 import sys
 from pathlib import Path
@@ -14,6 +14,12 @@ from pinecone import Pinecone
 
 from app.core.config import settings
 from app.services.embeddings.openai_embeddings import OpenAIEmbeddingProvider
+from app.services.commercial_brochure_service import (
+    BROCHURE_TEC_MD_FILENAME,
+    BROCHURE_TEC_PDF_FILENAME,
+    CommercialBrochureService,
+    _DOC_DIR as COMTEC_DIR,
+)
 from app.services.manual_lubrication_service import (
     LUB_MD_FILENAME,
     LUB_PDF_FILENAME,
@@ -28,11 +34,12 @@ from app.services.manual_specs_service import (
 )
 
 NS = "trs4531"
+NS_COM = "trs4531-comercial"
 
 
-def _count_prefix(index, prefix: str) -> int:
+def _count_prefix(index, prefix: str, namespace: str = NS) -> int:
     total = 0
-    for page in index.list(prefix=prefix, namespace=NS):
+    for page in index.list(prefix=prefix, namespace=namespace):
         if hasattr(page, "vectors"):
             total += len(page.vectors)
         elif isinstance(page, list):
@@ -54,7 +61,7 @@ def _count_by_filter(index, flt: dict) -> int:
 
 async def main() -> None:
     print("=" * 60)
-    print("VERIFICACIÓN — Cap. 7 y Cap. 9 (Markdown vs PDF)")
+    print("VERIFICACIÓN — Cap. 7, Cap. 9 y Brochure Técnico Comercial (MD vs PDF)")
     print("=" * 60)
 
     if not settings.pinecone_api_key:
@@ -69,17 +76,22 @@ async def main() -> None:
     spec_local = len(ManualSpecsService().extract_chunks(
         SPECS_DIR / SPECS_MD_FILENAME, SPECS_MD_FILENAME
     )[0])
+    comtec_local = len(CommercialBrochureService().extract_chunks(
+        COMTEC_DIR / BROCHURE_TEC_MD_FILENAME, BROCHURE_TEC_MD_FILENAME
+    )[0])
 
     lub_pine = _count_prefix(index, "lub-")
     spec_pine = _count_prefix(index, "spec-")
     pdf7_pine = _count_prefix(index, "cap7-lubricacion-trs4531-v1--p")
     pdf9_pine = _count_prefix(index, "cap9-especificaciones-trs4531--p")
+    comtec_pine = _count_prefix(index, "comtec-", NS_COM)
 
-    print(f"\nNamespace: {NS}  |  Índice: {settings.pinecone_index_name}\n")
+    print(f"\nNamespace técnico: {NS}  |  comercial: {NS_COM}  |  Índice: {settings.pinecone_index_name}\n")
     print(f"  {'Fuente':<35} {'Local':>8} {'Pinecone':>10} {'Estado':>10}")
     print("  " + "-" * 65)
     print(f"  {'cap7 .md (lub-*)':<35} {lub_local:>8} {lub_pine:>10} {_ok(lub_pine, lub_local):>10}")
     print(f"  {'cap9 .md (spec-*)':<35} {spec_local:>8} {spec_pine:>10} {_ok(spec_pine, spec_local):>10}")
+    print(f"  {'brochure téc. .md (comtec-*)':<35} {comtec_local:>8} {comtec_pine:>10} {_ok(comtec_pine, comtec_local):>10}")
     print(f"  {'cap7 PDF (legacy)':<35} {'—':>8} {pdf7_pine:>10} {_zero(pdf7_pine):>10}")
     print(f"  {'cap9 PDF (legacy)':<35} {'—':>8} {pdf9_pine:>10} {_zero(pdf9_pine):>10}")
 
@@ -116,14 +128,38 @@ async def main() -> None:
     )
     print(f"  Vectores PDF cap9 restantes (filtro exacto): {len(r_pdf9.matches)}  (esperado: 0)")
 
+    q_com = await embedder.embed("dimensiones peso prestaciones TRS4531 brochure técnico")
+    r_comtec = index.query(
+        vector=q_com,
+        top_k=3,
+        namespace=NS_COM,
+        filter={"doc_type": {"$eq": "commercial_technical"}},
+        include_metadata=True,
+    )
+    print("\n  Prueba RAG brochure técnico (.md) — top 3:")
+    for m in r_comtec.matches:
+        md = m.metadata
+        print(f"    score={m.score:.3f}  {md.get('document_name')}  |  {md.get('section_title', '')[:50]}")
+
+    r_comtec_pdf = index.query(
+        vector=q_com,
+        top_k=3,
+        namespace=NS_COM,
+        filter={"document_name": {"$eq": BROCHURE_TEC_PDF_FILENAME}},
+        include_metadata=True,
+    )
+    print(f"\n  Vectores PDF brochure técnico restantes: {len(r_comtec_pdf.matches)}  (esperado: 0)")
+
     all_ok = (
         lub_pine == lub_local
         and spec_pine == spec_local
+        and comtec_pine == comtec_local
         and pdf7_pine == 0
         and pdf9_pine == 0
         and len(r_pdf.matches) == 0
+        and len(r_comtec_pdf.matches) == 0
     )
-    print("\n" + ("OK — el agente usa solo .md para cap7/cap9" if all_ok else "Revisa filas con estado distinto de OK"))
+    print("\n" + ("OK — el agente usa .md para cap7/cap9 y brochure técnico" if all_ok else "Revisa filas con estado distinto de OK"))
 
 
 def _ok(pine: int, local: int) -> str:

@@ -10,6 +10,10 @@ from app.schemas.source import SourceItem
 from app.services.llm.factory import get_llm_provider
 from app.services.supabase_service import SupabaseService
 
+from app.services.commercial_brochure_service import (
+    BROCHURE_TEC_MD_FILENAME,
+    BROCHURE_TEC_PDF_FILENAME,
+)
 from app.services.manual_lubrication_service import LUB_MD_FILENAME, LUB_PDF_FILENAME
 from app.services.manual_specs_service import SPECS_MD_FILENAME, SPECS_PDF_FILENAME
 
@@ -24,6 +28,8 @@ _SPECS_DOC_MD         = SPECS_MD_FILENAME
 _SPECS_DOC_PDF_LEGACY = SPECS_PDF_FILENAME
 _LUB_DOC_MD           = LUB_MD_FILENAME
 _LUB_DOC_PDF_LEGACY   = LUB_PDF_FILENAME
+_COMTEC_DOC_MD        = BROCHURE_TEC_MD_FILENAME
+_COMTEC_DOC_PDF_LEGACY = BROCHURE_TEC_PDF_FILENAME
 
 # Términos coloquiales → equivalentes técnicos usados en los documentos.
 _SYNONYM_MAP = {
@@ -84,6 +90,11 @@ def _is_legacy_specs_pdf(document_name: str) -> bool:
 def _is_legacy_lubricacion_pdf(document_name: str) -> bool:
     """PDF cap7 — reemplazado por cap7-lubricacion-trs4531-v1.md."""
     return document_name == _LUB_DOC_PDF_LEGACY
+
+
+def _is_legacy_comercial_tec_pdf(document_name: str) -> bool:
+    """PDF brochure técnico — reemplazado por TRS4531_Brochure_Tecnico_ESP.md."""
+    return document_name == _COMTEC_DOC_PDF_LEGACY
 
 
 def _exact_fault_filter(fault_parsed) -> dict | None:
@@ -407,6 +418,18 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
         embedding, top_k=_RAG_TOP_K_COMERCIAL, namespace=_NS_COMERCIAL,
     ))
 
+    # ── 6b. Refuerzo brochure técnico (.md) para specs/dimensiones comerciales
+    if _is_spec_question(question):
+        _merge(await pinecone.search(
+            embedding,
+            top_k=8,
+            namespace=_NS_COMERCIAL,
+            filter={
+                "doc_type": {"$eq": "commercial_technical"},
+                "document_name": {"$eq": _COMTEC_DOC_MD},
+            },
+        ))
+
     sources.sort(key=lambda x: x.score, reverse=True)
 
     # Excluir PDFs legacy cuando existen fichas Markdown equivalentes.
@@ -414,6 +437,7 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
         sources = [s for s in sources if not _is_legacy_fault_pdf(s.document_name)]
     sources = [s for s in sources if not _is_legacy_specs_pdf(s.document_name)]
     sources = [s for s in sources if not _is_legacy_lubricacion_pdf(s.document_name)]
+    sources = [s for s in sources if not _is_legacy_comercial_tec_pdf(s.document_name)]
 
     return sources[:_RAG_TOP_K], structured_fault, structured_spare
 
