@@ -184,7 +184,8 @@ const TREE = [
         id: 'hidraulica-rexroth',
         name: 'Hidráulica – Principios básicos (Rexroth)',
         type: 'file',
-        serverPath: 'biblioteca-tecnica/pdf/knowledge-in-detail-hydraulics-basic-principles.pdf',
+        serverPath:
+          'biblioteca-tecnica/pdf/knowledge-in-detail-hydraulics-basic-principles.pdf',
       },
     ],
   },
@@ -308,7 +309,7 @@ function PdfViewer({ file, onBack }) {
     try {
       const resp = await api.get(
         `/documents/file?path=${encodeURIComponent(file.serverPath)}`,
-        { responseType: 'blob' },
+        { responseType: 'blob', timeout: 120_000 },
       )
       const url = URL.createObjectURL(resp.data)
       if (prevUrl.current) URL.revokeObjectURL(prevUrl.current)
@@ -318,9 +319,8 @@ function PdfViewer({ file, onBack }) {
       const status = err?.response?.status
       if (status === 404) {
         setError(
-          'El PDF no está disponible en el servidor. Si acabas de agregarlo, '
-          + 'confirma que Railway desplegó el último commit (carpeta backend/documents/). '
-          + 'Verifica en /health que spare_parts_pdfs sea 17.'
+          'El PDF no está en el servidor (404). En Railway, redeploy del backend y abre '
+          + '/health: hydraulics_basics_pdf_deployed debe ser true y technical_library_pdfs ≥ 1.'
         )
       } else {
         setError(err?.message || 'No se pudo cargar el documento.')

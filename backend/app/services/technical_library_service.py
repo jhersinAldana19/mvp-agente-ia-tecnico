@@ -14,6 +14,9 @@ MAX_CHUNK_CHARS = 10_000
 
 HYDRAULICS_MD_FILENAME = "knowledge-in-detail-hydraulics-basic-principles.md"
 HYDRAULICS_PDF_FILENAME = "knowledge-in-detail-hydraulics-basic-principles.pdf"
+HYDRAULICS_PDF_SERVER_PATH = (
+    "biblioteca-tecnica/pdf/knowledge-in-detail-hydraulics-basic-principles.pdf"
+)
 
 _DOC_DIR = (
     Path(__file__).resolve().parent.parent.parent / "documents" / "biblioteca-tecnica"

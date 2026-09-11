@@ -1,0 +1,7 @@
+# Si el servicio Railway usa la raíz del repo (no solo /backend):
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
