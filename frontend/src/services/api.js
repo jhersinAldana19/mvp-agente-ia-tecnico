@@ -25,7 +25,11 @@ api.interceptors.response.use(
       message =
         'La consulta tardó demasiado. Comprueba que el backend esté en marcha e inténtalo de nuevo.'
     }
-    return Promise.reject(new Error(message))
+    const wrapped = new Error(message)
+    if (error.response?.status) {
+      wrapped.status = error.response.status
+    }
+    return Promise.reject(wrapped)
   }
 )
 

@@ -186,6 +186,9 @@ const TREE = [
         type: 'file',
         serverPath:
           'biblioteca-tecnica/pdf/knowledge-in-detail-hydraulics-basic-principles.pdf',
+        // Netlify sirve el PDF desde /public (Railway a veces no incluye documents/).
+        staticUrl:
+          '/documents/biblioteca-tecnica/knowledge-in-detail-hydraulics-basic-principles.pdf',
       },
     ],
   },
@@ -307,20 +310,31 @@ function PdfViewer({ file, onBack }) {
     setError('')
     setBlobUrl(null)
     try {
-      const resp = await api.get(
-        `/documents/file?path=${encodeURIComponent(file.serverPath)}`,
-        { responseType: 'blob', timeout: 120_000 },
-      )
-      const url = URL.createObjectURL(resp.data)
+      let blob
+      if (file.staticUrl) {
+        const resp = await fetch(file.staticUrl)
+        if (!resp.ok) {
+          const err = new Error(`Request failed with status code ${resp.status}`)
+          err.status = resp.status
+          throw err
+        }
+        blob = await resp.blob()
+      } else {
+        const resp = await api.get(
+          `/documents/file?path=${encodeURIComponent(file.serverPath)}`,
+          { responseType: 'blob', timeout: 120_000 },
+        )
+        blob = resp.data
+      }
+      const url = URL.createObjectURL(blob)
       if (prevUrl.current) URL.revokeObjectURL(prevUrl.current)
       prevUrl.current = url
       setBlobUrl(url)
     } catch (err) {
-      const status = err?.response?.status
+      const status = err?.response?.status ?? err?.status
       if (status === 404) {
         setError(
-          'El PDF no está en el servidor (404). En Railway, redeploy del backend y abre '
-          + '/health: hydraulics_basics_pdf_deployed debe ser true y technical_library_pdfs ≥ 1.'
+          'No se encontró el PDF. Si acabas de desplegar, espera a que Netlify termine el build.'
         )
       } else {
         setError(err?.message || 'No se pudo cargar el documento.')
