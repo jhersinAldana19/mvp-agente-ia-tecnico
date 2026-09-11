@@ -176,6 +176,19 @@ const TREE = [
     ],
   },
   {
+    id: 'biblioteca-tecnica',
+    name: 'BIBLIOTECA TÉCNICA',
+    type: 'folder',
+    children: [
+      {
+        id: 'hidraulica-rexroth',
+        name: 'Hidráulica – Principios básicos (Rexroth)',
+        type: 'file',
+        serverPath: 'biblioteca-tecnica/pdf/knowledge-in-detail-hydraulics-basic-principles.pdf',
+      },
+    ],
+  },
+  {
     id: 'comercial',
     name: 'COMERCIAL',
     type: 'folder',

@@ -17,10 +17,14 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    const message =
+    let message =
       error.response?.data?.detail ||
       error.message ||
       'Error de conexión con el servidor'
+    if (error.code === 'ECONNABORTED') {
+      message =
+        'La consulta tardó demasiado. Comprueba que el backend esté en marcha e inténtalo de nuevo.'
+    }
     return Promise.reject(new Error(message))
   }
 )

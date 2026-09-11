@@ -32,9 +32,16 @@ from app.services.manual_specs_service import (
     ManualSpecsService,
     _DOC_DIR as SPECS_DIR,
 )
+from app.services.technical_library_service import (
+    HYDRAULICS_MD_FILENAME,
+    HYDRAULICS_PDF_FILENAME,
+    TechnicalLibraryService,
+    _DOC_DIR as LIB_DIR,
+)
 
 NS = "trs4531"
 NS_COM = "trs4531-comercial"
+NS_LIB = "biblioteca-tecnica"
 
 
 def _count_prefix(index, prefix: str, namespace: str = NS) -> int:
@@ -79,19 +86,27 @@ async def main() -> None:
     comtec_local = len(CommercialBrochureService().extract_chunks(
         COMTEC_DIR / BROCHURE_TEC_MD_FILENAME, BROCHURE_TEC_MD_FILENAME
     )[0])
+    lib_local = len(TechnicalLibraryService().extract_chunks(
+        LIB_DIR / HYDRAULICS_MD_FILENAME, HYDRAULICS_MD_FILENAME
+    )[0])
 
     lub_pine = _count_prefix(index, "lub-")
     spec_pine = _count_prefix(index, "spec-")
     pdf7_pine = _count_prefix(index, "cap7-lubricacion-trs4531-v1--p")
     pdf9_pine = _count_prefix(index, "cap9-especificaciones-trs4531--p")
     comtec_pine = _count_prefix(index, "comtec-", NS_COM)
+    lib_pine = _count_prefix(index, "blib-", NS_LIB)
 
-    print(f"\nNamespace técnico: {NS}  |  comercial: {NS_COM}  |  Índice: {settings.pinecone_index_name}\n")
+    print(
+        f"\nNamespace técnico: {NS}  |  comercial: {NS_COM}  |  "
+        f"biblioteca: {NS_LIB}  |  Índice: {settings.pinecone_index_name}\n"
+    )
     print(f"  {'Fuente':<35} {'Local':>8} {'Pinecone':>10} {'Estado':>10}")
     print("  " + "-" * 65)
     print(f"  {'cap7 .md (lub-*)':<35} {lub_local:>8} {lub_pine:>10} {_ok(lub_pine, lub_local):>10}")
     print(f"  {'cap9 .md (spec-*)':<35} {spec_local:>8} {spec_pine:>10} {_ok(spec_pine, spec_local):>10}")
     print(f"  {'brochure téc. .md (comtec-*)':<35} {comtec_local:>8} {comtec_pine:>10} {_ok(comtec_pine, comtec_local):>10}")
+    print(f"  {'biblioteca .md (blib-*)':<35} {lib_local:>8} {lib_pine:>10} {_ok(lib_pine, lib_local):>10}")
     print(f"  {'cap7 PDF (legacy)':<35} {'—':>8} {pdf7_pine:>10} {_zero(pdf7_pine):>10}")
     print(f"  {'cap9 PDF (legacy)':<35} {'—':>8} {pdf9_pine:>10} {_zero(pdf9_pine):>10}")
 
@@ -150,16 +165,40 @@ async def main() -> None:
     )
     print(f"\n  Vectores PDF brochure técnico restantes: {len(r_comtec_pdf.matches)}  (esperado: 0)")
 
+    q_lib = await embedder.embed("Pascal law hydraulic pressure Rexroth")
+    r_lib = index.query(
+        vector=q_lib,
+        top_k=3,
+        namespace=NS_LIB,
+        filter={"doc_type": {"$eq": "technical_library"}},
+        include_metadata=True,
+    )
+    print("\n  Prueba RAG biblioteca técnica (.md) — top 3:")
+    for m in r_lib.matches:
+        md = m.metadata
+        print(f"    score={m.score:.3f}  {md.get('document_name')}  |  {md.get('section_title', '')[:50]}")
+
+    r_lib_pdf = index.query(
+        vector=q_lib,
+        top_k=3,
+        namespace=NS_LIB,
+        filter={"document_name": {"$eq": HYDRAULICS_PDF_FILENAME}},
+        include_metadata=True,
+    )
+    print(f"\n  Vectores PDF biblioteca restantes: {len(r_lib_pdf.matches)}  (esperado: 0)")
+
     all_ok = (
         lub_pine == lub_local
         and spec_pine == spec_local
         and comtec_pine == comtec_local
+        and lib_pine == lib_local
         and pdf7_pine == 0
         and pdf9_pine == 0
         and len(r_pdf.matches) == 0
         and len(r_comtec_pdf.matches) == 0
+        and len(r_lib_pdf.matches) == 0
     )
-    print("\n" + ("OK — el agente usa .md para cap7/cap9 y brochure técnico" if all_ok else "Revisa filas con estado distinto de OK"))
+    print("\n" + ("OK — RAG usa .md (cap7/cap9/brochure/biblioteca)" if all_ok else "Revisa filas con estado distinto de OK"))
 
 
 def _ok(pine: int, local: int) -> str:

@@ -149,10 +149,11 @@ export default function TechnicianChatPage() {
     setError('')
 
     try {
-      const { data } = await api.post('/chat', {
-        question: trimmed,
-        session_id: sessionId,
-      })
+      const { data } = await api.post(
+        '/chat',
+        { question: trimmed, session_id: sessionId },
+        { timeout: 120_000 },
+      )
 
       if (!sessionId) setSessionId(data.session_id)
 

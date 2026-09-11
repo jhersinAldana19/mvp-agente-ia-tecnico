@@ -6,6 +6,7 @@ documents/manuales/trs4531/*.md
 documents/comercial/
 documents/manuales-de-repuestos/trs4531/*.md
 documents/codigos-de-fallas/trs4531/*.md
+documents/biblioteca-tecnica/*.md
 # Los PDF en pdf/ SÍ se versionan para la página Documentos en Render.
 __pycache__/
 *.pyc

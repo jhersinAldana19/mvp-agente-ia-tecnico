@@ -298,6 +298,7 @@ Cuando hay fragmentos de varios documentos, usa este orden:
 4. Capítulo 9 (.md) — capacidades en litros, dimensiones y especificaciones tabuladas
 5. Capítulo 7 (.md) — tipo de lubricante, intervalos de mantenimiento, acciones (I/L/E/R)
 6. Brochures comerciales — solo apoyo descriptivo
+7. Biblioteca técnica (doc_type = technical_library) — referencia general (p. ej. principios de hidráulica Rexroth). No sustituye manuales TRS4531 ni procedimientos del equipo. Para “cómo está en el TRS4531”, prioriza manuales cap. 1–9 y repuestos cap. 10 hidráulico.
 
 Si el manual técnico y el brochure dan datos distintos, prioriza el manual e indica la diferencia.
 Conflicto conocido: el manual técnico indica eje frontal Kessler D102; el brochure puede indicar D101. Menciona ambos y prioriza el manual: "El manual técnico indica Kessler D102. El brochure comercial menciona D101. Se prioriza el manual técnico."

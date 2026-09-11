@@ -16,6 +16,10 @@ from app.services.commercial_brochure_service import (
 )
 from app.services.manual_lubrication_service import LUB_MD_FILENAME, LUB_PDF_FILENAME
 from app.services.manual_specs_service import SPECS_MD_FILENAME, SPECS_PDF_FILENAME
+from app.services.technical_library_service import (
+    HYDRAULICS_MD_FILENAME,
+    HYDRAULICS_PDF_FILENAME,
+)
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -24,12 +28,15 @@ _RAG_TOP_K            = 12
 _RAG_TOP_K_COMERCIAL  = 4   # slots para brochures en cada consulta
 _NS_TECNICO           = "trs4531"
 _NS_COMERCIAL         = "trs4531-comercial"
+_NS_BIBLIOTECA        = "biblioteca-tecnica"
 _SPECS_DOC_MD         = SPECS_MD_FILENAME
 _SPECS_DOC_PDF_LEGACY = SPECS_PDF_FILENAME
 _LUB_DOC_MD           = LUB_MD_FILENAME
 _LUB_DOC_PDF_LEGACY   = LUB_PDF_FILENAME
 _COMTEC_DOC_MD        = BROCHURE_TEC_MD_FILENAME
 _COMTEC_DOC_PDF_LEGACY = BROCHURE_TEC_PDF_FILENAME
+_LIB_HYDR_MD          = HYDRAULICS_MD_FILENAME
+_LIB_HYDR_PDF_LEGACY  = HYDRAULICS_PDF_FILENAME
 
 # Términos coloquiales → equivalentes técnicos usados en los documentos.
 _SYNONYM_MAP = {
@@ -64,6 +71,19 @@ _LUBRICACION_WORDS = frozenset({
     "nota 5", "nota 8", "nota 9", "nota 10", "nota 13",
 })
 
+# Preguntas de conceptos generales (Biblioteca técnica, no específicas del TRS4531).
+_LIBRARY_WORDS = frozenset({
+    "hidrául", "hidraul", "hydraulic",
+    "bomba hidrául", "bomba hidraul", "hydraulic pump",
+    "válvula", "valvula", "valve",
+    "pascal", "caudal", "presión hidrául", "presion hidraul",
+    "cilindro hidrául", "motor hidrául", "motor hidraul",
+    "rexroth", "iso 1219", "símbolo hidrául", "simbolo hidraul",
+    "circuito hidrául", "circuito hidraul", "power unit",
+    "biblioteca técnica", "biblioteca tecnica",
+    "principio", "principles",
+})
+
 _FAULT_CODES_FILTER = {"doc_type": {"$eq": "fault_codes"}}
 _SPARE_PARTS_FILTER = {"doc_type": {"$eq": "spare_parts"}}
 _SPARE_INDEX_FILTER = {
@@ -95,6 +115,35 @@ def _is_legacy_lubricacion_pdf(document_name: str) -> bool:
 def _is_legacy_comercial_tec_pdf(document_name: str) -> bool:
     """PDF brochure técnico — reemplazado por TRS4531_Brochure_Tecnico_ESP.md."""
     return document_name == _COMTEC_DOC_PDF_LEGACY
+
+
+def _is_legacy_technical_library_pdf(document_name: str) -> bool:
+    """PDF biblioteca — RAG usa solo el .md equivalente."""
+    return document_name == _LIB_HYDR_PDF_LEGACY
+
+
+def _is_technical_library_question(question: str) -> bool:
+    q = question.lower()
+    return any(w in q for w in _LIBRARY_WORDS)
+
+
+def _is_equipment_specific_question(question: str) -> bool:
+    """Pregunta sobre el TRS4531 / TECPORT, no solo teoría general."""
+    q = question.lower()
+    return any(
+        token in q
+        for token in (
+            "trs4531", "reach stacker", "spreader", "tecport",
+            "capítulo", "capitulo", "manual",
+        )
+    )
+
+
+def _is_general_library_question(question: str) -> bool:
+    """Conceptos de biblioteca técnica sin foco en el equipo."""
+    return _is_technical_library_question(question) and not _is_equipment_specific_question(
+        question
+    )
 
 
 def _exact_fault_filter(fault_parsed) -> dict | None:
@@ -389,44 +438,56 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
             alt_emb, top_k=_RAG_TOP_K // 2, namespace=_NS_TECNICO,
         ))
 
-    # ── 4. Refuerzo cap7 para preguntas de lubricación/aceites ───────────────
-    if _is_lubricacion_question(question):
+    general_library = _is_general_library_question(question)
+
+    # ── 4–6. Refuerzos TRS4531 / comercial (omitir en preguntas solo de biblioteca)
+    if not general_library:
+        if _is_lubricacion_question(question):
+            _merge(await pinecone.search(
+                embedding,
+                top_k=10,
+                namespace=_NS_TECNICO,
+                filter={
+                    "doc_type": {"$eq": "manual_lubrication"},
+                    "document_name": {"$eq": _LUB_DOC_MD},
+                },
+            ))
+
+        if _is_spec_question(question):
+            _merge(await pinecone.search(
+                embedding,
+                top_k=10,
+                namespace=_NS_TECNICO,
+                filter={
+                    "doc_type": {"$eq": "manual_specs"},
+                    "document_name": {"$eq": _SPECS_DOC_MD},
+                },
+            ))
+
+        _merge(await pinecone.search(
+            embedding, top_k=_RAG_TOP_K_COMERCIAL, namespace=_NS_COMERCIAL,
+        ))
+
+        if _is_spec_question(question):
+            _merge(await pinecone.search(
+                embedding,
+                top_k=8,
+                namespace=_NS_COMERCIAL,
+                filter={
+                    "doc_type": {"$eq": "commercial_technical"},
+                    "document_name": {"$eq": _COMTEC_DOC_MD},
+                },
+            ))
+
+    # ── 7. Biblioteca técnica (referencia general, p. ej. hidráulica Rexroth)
+    if _is_technical_library_question(question):
         _merge(await pinecone.search(
             embedding,
             top_k=10,
-            namespace=_NS_TECNICO,
+            namespace=_NS_BIBLIOTECA,
             filter={
-                "doc_type": {"$eq": "manual_lubrication"},
-                "document_name": {"$eq": _LUB_DOC_MD},
-            },
-        ))
-
-    # ── 5. Refuerzo cap9 para preguntas de especificaciones ──────────────────
-    if _is_spec_question(question):
-        _merge(await pinecone.search(
-            embedding,
-            top_k=10,
-            namespace=_NS_TECNICO,
-            filter={
-                "doc_type": {"$eq": "manual_specs"},
-                "document_name": {"$eq": _SPECS_DOC_MD},
-            },
-        ))
-
-    # ── 6. Búsqueda en brochures comerciales (siempre) ───────────────────────
-    _merge(await pinecone.search(
-        embedding, top_k=_RAG_TOP_K_COMERCIAL, namespace=_NS_COMERCIAL,
-    ))
-
-    # ── 6b. Refuerzo brochure técnico (.md) para specs/dimensiones comerciales
-    if _is_spec_question(question):
-        _merge(await pinecone.search(
-            embedding,
-            top_k=8,
-            namespace=_NS_COMERCIAL,
-            filter={
-                "doc_type": {"$eq": "commercial_technical"},
-                "document_name": {"$eq": _COMTEC_DOC_MD},
+                "doc_type": {"$eq": "technical_library"},
+                "document_name": {"$eq": _LIB_HYDR_MD},
             },
         ))
 
@@ -438,6 +499,7 @@ async def _retrieve_sources(question: str) -> tuple[List[SourceItem], str]:
     sources = [s for s in sources if not _is_legacy_specs_pdf(s.document_name)]
     sources = [s for s in sources if not _is_legacy_lubricacion_pdf(s.document_name)]
     sources = [s for s in sources if not _is_legacy_comercial_tec_pdf(s.document_name)]
+    sources = [s for s in sources if not _is_legacy_technical_library_pdf(s.document_name)]
 
     return sources[:_RAG_TOP_K], structured_fault, structured_spare
 
