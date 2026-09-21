@@ -56,6 +56,22 @@ Documentación Swagger: `http://localhost:8000/docs` (solo en `ENVIRONMENT=devel
 | `EMBEDDING_PROVIDER` | `mock` o `openai` |
 | `FRONTEND_URL` | URL del frontend (para CORS) |
 
+## API RAG (integraciones externas)
+
+Misma búsqueda que SOFIA, **sin** generar respuesta con LLM:
+
+```http
+POST /rag/query
+Authorization: Bearer <JWT Supabase>
+Content-Type: application/json
+
+{ "question": "¿Qué aceite usa la transmisión?" }
+```
+
+Respuesta: `{ "sources": [...], "structured_context": "..." }`.
+
+No hace falta Pinecone ni OpenAI en el cliente: solo la URL del backend y un usuario con login en Supabase.
+
 ## Cambiar de mock a OpenAI
 
 En tu `.env`:
